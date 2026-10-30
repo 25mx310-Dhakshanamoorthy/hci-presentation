@@ -1,0 +1,1537 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HCI in Digital Banking: Designing Better Digital Banking Experiences</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        brand: {
+                            50: '#f0f9ff',
+                            100: '#e0f2fe',
+                            200: '#bae6fd',
+                            300: '#7dd3fc',
+                            400: '#38bdf8',
+                            500: '#0ea5e9',
+                            600: '#0284c7', // Primary
+                            700: '#0369a1',
+                            800: '#075985',
+                            900: '#0c4a6e', // Headings/Dark Navy
+                            950: '#082f49', 
+                        },
+                        success: { 500: '#10b981', 50: '#ecfdf5' },
+                        error: { 500: '#ef4444', 50: '#fef2f2' }
+                    },
+                    boxShadow: {
+                        'glass': '0 4px 30px rgba(0, 0, 0, 0.05)',
+                        'floating': '0 20px 40px -15px rgba(2, 132, 199, 0.1)',
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body { margin: 0; overflow: hidden; background-color: #ffffff; color: #0c4a6e; font-family: 'Inter', sans-serif; }
+        #presentation-container { display: flex; width: 1500vw; height: 100vh; transition: transform 0.6s cubic-bezier(0.22, 1, 0.36, 1); will-change: transform; }
+        .slide { width: 100vw; height: 100vh; padding: 4rem 4rem 6rem 4rem; box-sizing: border-box; position: relative; overflow-y: auto; overflow-x: hidden; display: flex; flex-direction: column; }
+        .slide::-webkit-scrollbar { display: none; }
+        .slide { -ms-overflow-style: none; scrollbar-width: none; }
+        
+        h1, h2, h3 { color: #082f49; letter-spacing: -0.02em; }
+        p { color: #075985; line-height: 1.6; }
+
+        .fade-in { opacity: 0; animation: fadeIn 0.8s ease forwards; }
+        .slide-up { opacity: 0; transform: translateY(20px); animation: slideUp 0.8s ease forwards; }
+        @keyframes fadeIn { to { opacity: 1; } }
+        @keyframes slideUp { to { opacity: 1; transform: translateY(0); } }
+        .delay-100 { animation-delay: 100ms; } .delay-200 { animation-delay: 200ms; } .delay-300 { animation-delay: 300ms; }
+
+        /* Slider */
+        .ba-slider { position: relative; width: 100%; height: 500px; overflow: hidden; border-radius: 1rem; border: 1px solid #e0f2fe; }
+        .ba-image { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; background: white; }
+        .ba-image-before { width: 50%; z-index: 2; border-right: 2px solid #0284c7; overflow: hidden; background: #f8fafc; }
+        .ba-slider-handle { position: absolute; top: 0; bottom: 0; left: 50%; width: 40px; margin-left: -20px; z-index: 3; cursor: ew-resize; display: flex; align-items: center; justify-content: center; }
+        .ba-slider-button { width: 32px; height: 32px; background: #0284c7; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }
+        .ba-label { position: absolute; top: 1rem; padding: 0.25rem 1rem; border-radius: 999px; font-weight: 600; font-size: 0.875rem; z-index: 4; }
+        .ba-label-before { left: 1rem; background: rgba(226, 232, 240, 0.9); color: #475569; }
+        .ba-label-after { right: 1rem; background: rgba(2, 132, 199, 0.9); color: white; }
+
+        /* Interactive Elements */
+        .interactive-card { transition: all 0.3s ease; cursor: pointer; border: 1px solid #e0f2fe; }
+        .interactive-card:hover { transform: translateY(-5px); box-shadow: 0 20px 25px -5px rgba(2, 132, 199, 0.1); border-color: #bae6fd; background-color: #f0f9ff;}
+        
+        .hotspot { position: absolute; width: 24px; height: 24px; background: #ef4444; border-radius: 50%; border: 3px solid white; cursor: pointer; animation: pulse 2s infinite; z-index: 10;}
+        .hotspot:hover { transform: scale(1.2); }
+        .hotspot-content { position: absolute; top: -70px; left: 50%; transform: translateX(-50%); background: white; padding: 0.75rem; border-radius: 0.5rem; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); display: none; width: max-content; max-width: 250px; font-size: 0.875rem; color: #0f172a; border: 1px solid #ef4444; z-index: 11;}
+        .hotspot:hover + .hotspot-content, .hotspot-content:hover { display: block; }
+        @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); } 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); } }
+
+        /* Control Bar & Progress */
+        #control-bar { position: fixed; bottom: 0; left: 0; right: 0; height: 60px; background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); border-top: 1px solid #f1f5f9; display: flex; justify-content: space-between; align-items: center; padding: 0 2rem; z-index: 50; }
+        #progress-container { position: absolute; top: 0; left: 0; width: 100%; height: 3px; background: #f1f5f9; }
+        #progress-bar { height: 100%; background: #0284c7; width: 0%; transition: width 0.3s ease; }
+        
+        /* Notes & Modals */
+        #presenter-notes { position: fixed; bottom: 70px; right: 2rem; width: 380px; background: white; border-radius: 1rem; border: 1px solid #e2e8f0; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1); padding: 1.5rem; z-index: 50; display: none; transform: translateY(10px); opacity: 0; transition: all 0.3s ease;}
+        #presenter-notes.show { display: block; transform: translateY(0); opacity: 1; }
+        
+        #sources-modal { display: none; background: rgba(8, 47, 73, 0.8); backdrop-filter: blur(4px); }
+        #sources-modal.show { display: flex; }
+
+        /* Demo Phone */
+        .demo-phone { width: 320px; height: 640px; border-radius: 36px; border: 12px solid #0f172a; overflow: hidden; background: white; position: relative; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); }
+        .demo-header { background: #0284c7; color: white; padding: 2rem 1rem 1rem; text-align: center; }
+        .bad-demo .demo-header { background: #64748b; padding: 1rem; }
+    </style>
+</head>
+<body class="antialiased selection:bg-brand-200 selection:text-brand-900">
+
+    <div id="presentation-container">
+
+        <!-- ==========================================
+             SLIDE 1: HERO
+             ========================================== -->
+        <section class="slide items-center justify-center bg-gradient-to-br from-white to-brand-50" id="slide-1" data-section="Introduction">
+            <div class="max-w-5xl w-full text-center slide-up">
+                <span class="inline-block py-1.5 px-4 rounded-full bg-brand-100 text-brand-700 font-bold text-xs tracking-widest mb-6">HUMAN-COMPUTER INTERACTION</span>
+                <h1 class="text-5xl md:text-6xl font-extrabold text-brand-950 tracking-tight mb-4">
+                    HCI in Digital Banking:<br>
+                    <span class="text-brand-600">Designing Better Digital Banking Experiences</span>
+                </h1>
+                <p class="text-2xl text-brand-700 font-light mb-12">Real-World Case Study + Interactive HCI Demonstration</p>
+                
+                <div class="relative mx-auto w-full max-w-4xl bg-white rounded-2xl shadow-glass border border-brand-100 p-8 delay-200 slide-up">
+                    <div class="flex items-center justify-between w-full relative z-10 font-medium text-sm">
+                        <div class="flex flex-col items-center gap-3">
+                            <div class="w-14 h-14 rounded-full bg-slate-100 flex items-center justify-center text-xl shadow-sm border border-slate-200">👤</div>
+                            <span class="text-brand-900 font-bold tracking-wide">USER</span>
+                        </div>
+                        <div class="text-brand-300 font-bold">→</div>
+                        <div class="flex flex-col items-center gap-3">
+                            <div class="w-14 h-14 rounded-full bg-brand-50 flex items-center justify-center text-brand-600 text-xl shadow-sm border border-brand-200">🖱️</div>
+                            <span class="text-brand-900 font-bold tracking-wide">INTERACTION</span>
+                        </div>
+                        <div class="text-brand-300 font-bold">→</div>
+                        <div class="flex flex-col items-center gap-3 scale-110">
+                            <div class="w-16 h-16 rounded-full bg-brand-600 flex items-center justify-center text-white text-2xl shadow-md border-4 border-brand-100">📱</div>
+                            <span class="text-brand-900 font-bold tracking-wide">INTERFACE</span>
+                        </div>
+                        <div class="text-brand-300 font-bold">→</div>
+                        <div class="flex flex-col items-center gap-3">
+                            <div class="w-14 h-14 rounded-full bg-brand-50 flex items-center justify-center text-brand-600 text-xl shadow-sm border border-brand-200">💬</div>
+                            <span class="text-brand-900 font-bold tracking-wide">FEEDBACK</span>
+                        </div>
+                        <div class="text-brand-300 font-bold">→</div>
+                        <div class="flex flex-col items-center gap-3">
+                            <div class="w-14 h-14 rounded-full bg-success-50 flex items-center justify-center text-success-500 text-xl shadow-sm border border-success-200">✨</div>
+                            <span class="text-brand-900 font-bold tracking-wide">EXPERIENCE</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mt-12 inline-block px-4 py-2 bg-brand-50 border border-brand-200 rounded-lg text-brand-700 font-bold text-sm tracking-wide delay-400 slide-up">
+                    15 Interactive Sections
+                </div>
+
+                <!-- Names Block -->
+                <div class="mt-8 flex flex-wrap justify-center gap-4 delay-500 slide-up">
+                    <div class="bg-white px-4 py-2 rounded-lg border border-brand-100 shadow-sm text-brand-900 text-sm font-semibold">
+                        P. Chittesh <span class="text-brand-500 ml-1">[25MX306]</span>
+                    </div>
+                    <div class="bg-white px-4 py-2 rounded-lg border border-brand-100 shadow-sm text-brand-900 text-sm font-semibold">
+                        S. Dhakshanamoorthy <span class="text-brand-500 ml-1">[25MX310]</span>
+                    </div>
+                    <div class="bg-white px-4 py-2 rounded-lg border border-brand-100 shadow-sm text-brand-900 text-sm font-semibold">
+                        O.S. Prabhakar <span class="text-brand-500 ml-1">[25MX339]</span>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+        <!-- ==========================================
+             SLIDE 2: WHAT IS HCI & WHY UI MATTERS
+             ========================================== -->
+        <section class="slide" id="slide-2" data-section="Fundamentals">
+            <header class="mb-12 slide-up">
+                <span class="text-brand-500 font-bold tracking-widest text-sm uppercase">Fundamentals</span>
+                <h2 class="text-4xl font-bold text-brand-950 mt-2">What is HCI & Why UI Matters</h2>
+                <p class="text-xl text-brand-700 mt-2">Human-Computer Interaction is the study of how people design, implement, and use interactive computer systems.</p>
+            </header>
+            
+            <div class="flex flex-col md:flex-row gap-8 flex-1 items-stretch slide-up delay-100">
+                <div class="w-full md:w-1/2 p-8 bg-white rounded-2xl border border-brand-100 shadow-sm flex flex-col justify-center">
+                    <h3 class="text-2xl font-bold mb-8 text-brand-900 text-center">The System Loop</h3>
+                    <div class="flex flex-col items-center gap-4">
+                        <div class="w-2/3 bg-brand-50 rounded-xl p-4 text-center border border-brand-200 font-bold text-brand-900 shadow-sm">USER</div>
+                        <div class="text-brand-400 text-sm font-bold">↓ Input ↓</div>
+                        <div class="w-2/3 bg-brand-600 rounded-xl p-4 text-center border-2 border-brand-500 font-bold text-white shadow-md">INTERFACE</div>
+                        <div class="text-brand-400 text-sm font-bold">↓ Processing ↓</div>
+                        <div class="w-2/3 bg-slate-50 rounded-xl p-4 text-center border border-slate-200 font-bold text-slate-700 shadow-sm">SYSTEM</div>
+                        <div class="text-brand-400 text-sm font-bold">↑ Feedback ↑</div>
+                    </div>
+                </div>
+                
+                <div class="w-full md:w-1/2 flex flex-col gap-6">
+                    <div class="bg-brand-900 p-8 rounded-2xl shadow-floating text-white flex-1 flex flex-col justify-center">
+                        <h3 class="text-2xl font-bold mb-4 text-brand-100">Characteristics of a Good UI</h3>
+                        <p class="text-brand-200 text-sm mb-6 leading-relaxed">A digital banking interface is the bridge between human intention and financial execution. It must be:</p>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="bg-brand-800 p-3 rounded-lg border border-brand-700"><span class="font-bold text-brand-100">Simple:</span> No unnecessary clutter.</div>
+                            <div class="bg-brand-800 p-3 rounded-lg border border-brand-700"><span class="font-bold text-brand-100">Clear:</span> Meaning of functions is obvious.</div>
+                            <div class="bg-brand-800 p-3 rounded-lg border border-brand-700"><span class="font-bold text-brand-100">Consistent:</span> Predictable patterns.</div>
+                            <div class="bg-brand-800 p-3 rounded-lg border border-brand-700"><span class="font-bold text-brand-100">Accessible:</span> Usable by all demographics.</div>
+                            <div class="bg-brand-800 p-3 rounded-lg border border-brand-700"><span class="font-bold text-brand-100">Efficient:</span> Fast task completion.</div>
+                            <div class="bg-brand-800 p-3 rounded-lg border border-brand-700"><span class="font-bold text-brand-100">Learnable:</span> Easy to grasp on first use.</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ==========================================
+             SLIDE 3: HCI PRINCIPLES & UNIVERSAL USABILITY
+             ========================================== -->
+        <section class="slide bg-brand-50" id="slide-3" data-section="Principles">
+            <header class="mb-10 slide-up">
+                <span class="text-brand-500 font-bold tracking-widest text-sm uppercase">Theory</span>
+                <h2 class="text-4xl font-bold text-brand-950 mt-2">HCI Principles & Universal Usability</h2>
+                <p class="text-xl text-brand-700 mt-2">Hover over cards to reveal definitions and digital banking examples.</p>
+            </header>
+
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 slide-up delay-100">
+                <!-- 8 Principles -->
+                <div class="interactive-card bg-white p-5 rounded-xl text-center relative overflow-hidden group h-32 flex items-center justify-center">
+                    <h3 class="font-bold text-lg text-brand-900 group-hover:-translate-y-20 transition-transform duration-300">Visibility</h3>
+                    <div class="absolute inset-0 p-4 bg-brand-100 transform translate-y-full group-hover:translate-y-0 transition-transform duration-300 flex flex-col justify-center text-left">
+                        <p class="text-xs text-brand-800 font-medium">Keeping users informed of system status.</p>
+                        <p class="text-xs text-brand-900 mt-1 font-bold">Ex: Showing real-time account balances.</p>
+                    </div>
+                </div>
+                <div class="interactive-card bg-white p-5 rounded-xl text-center relative overflow-hidden group h-32 flex items-center justify-center">
+                    <h3 class="font-bold text-lg text-brand-900 group-hover:-translate-y-20 transition-transform duration-300">Feedback</h3>
+                    <div class="absolute inset-0 p-4 bg-brand-100 transform translate-y-full group-hover:translate-y-0 transition-transform duration-300 flex flex-col justify-center text-left">
+                        <p class="text-xs text-brand-800 font-medium">Information sent back after an action.</p>
+                        <p class="text-xs text-brand-900 mt-1 font-bold">Ex: A clear "Transfer Successful" screen.</p>
+                    </div>
+                </div>
+                <div class="interactive-card bg-white p-5 rounded-xl text-center relative overflow-hidden group h-32 flex items-center justify-center">
+                    <h3 class="font-bold text-lg text-brand-900 group-hover:-translate-y-20 transition-transform duration-300">Consistency</h3>
+                    <div class="absolute inset-0 p-4 bg-brand-100 transform translate-y-full group-hover:translate-y-0 transition-transform duration-300 flex flex-col justify-center text-left">
+                        <p class="text-xs text-brand-800 font-medium">Similar operations use similar elements.</p>
+                        <p class="text-xs text-brand-900 mt-1 font-bold">Ex: Action buttons are always blue.</p>
+                    </div>
+                </div>
+                <div class="interactive-card bg-white p-5 rounded-xl text-center relative overflow-hidden group h-32 flex items-center justify-center">
+                    <h3 class="font-bold text-lg text-brand-900 group-hover:-translate-y-20 transition-transform duration-300">Error Prevention</h3>
+                    <div class="absolute inset-0 p-4 bg-brand-100 transform translate-y-full group-hover:translate-y-0 transition-transform duration-300 flex flex-col justify-center text-left">
+                        <p class="text-xs text-brand-800 font-medium">Designing so errors cannot happen.</p>
+                        <p class="text-xs text-brand-900 mt-1 font-bold">Ex: Disabling 'Send' if funds are low.</p>
+                    </div>
+                </div>
+                <div class="interactive-card bg-white p-5 rounded-xl text-center relative overflow-hidden group h-32 flex items-center justify-center">
+                    <h3 class="font-bold text-lg text-brand-900 group-hover:-translate-y-20 transition-transform duration-300">User Control</h3>
+                    <div class="absolute inset-0 p-4 bg-brand-100 transform translate-y-full group-hover:translate-y-0 transition-transform duration-300 flex flex-col justify-center text-left">
+                        <p class="text-xs text-brand-800 font-medium">Providing an "emergency exit".</p>
+                        <p class="text-xs text-brand-900 mt-1 font-bold">Ex: A clear 'Cancel Transaction' button.</p>
+                    </div>
+                </div>
+                <div class="interactive-card bg-white p-5 rounded-xl text-center relative overflow-hidden group h-32 flex items-center justify-center">
+                    <h3 class="font-bold text-lg text-brand-900 group-hover:-translate-y-20 transition-transform duration-300">Recognition</h3>
+                    <div class="absolute inset-0 p-4 bg-brand-100 transform translate-y-full group-hover:translate-y-0 transition-transform duration-300 flex flex-col justify-center text-left">
+                        <p class="text-xs text-brand-800 font-medium">Minimize user memory load.</p>
+                        <p class="text-xs text-brand-900 mt-1 font-bold">Ex: Showing recent payees instead of typing names.</p>
+                    </div>
+                </div>
+                <div class="interactive-card bg-white p-5 rounded-xl text-center relative overflow-hidden group h-32 flex items-center justify-center">
+                    <h3 class="font-bold text-lg text-brand-900 group-hover:-translate-y-20 transition-transform duration-300">Accessibility</h3>
+                    <div class="absolute inset-0 p-4 bg-brand-100 transform translate-y-full group-hover:translate-y-0 transition-transform duration-300 flex flex-col justify-center text-left">
+                        <p class="text-xs text-brand-800 font-medium">Usable by people with disabilities.</p>
+                        <p class="text-xs text-brand-900 mt-1 font-bold">Ex: High contrast text and aria-labels.</p>
+                    </div>
+                </div>
+                <div class="interactive-card bg-white p-5 rounded-xl text-center relative overflow-hidden group h-32 flex items-center justify-center">
+                    <h3 class="font-bold text-lg text-brand-900 group-hover:-translate-y-20 transition-transform duration-300">Efficiency</h3>
+                    <div class="absolute inset-0 p-4 bg-brand-100 transform translate-y-full group-hover:translate-y-0 transition-transform duration-300 flex flex-col justify-center text-left">
+                        <p class="text-xs text-brand-800 font-medium">Accelerators for expert users.</p>
+                        <p class="text-xs text-brand-900 mt-1 font-bold">Ex: Swipe-to-pay gestures on mobile.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-8 bg-white p-6 rounded-2xl border border-brand-200 slide-up delay-300 flex items-center gap-8 shadow-sm">
+                <div class="w-1/3">
+                    <h3 class="text-xl font-bold text-brand-900">Universal Usability</h3>
+                    <p class="text-sm text-brand-600 mt-2">Guidelines and theories that ensure interfaces work for diverse populations.</p>
+                </div>
+                <div class="w-2/3 grid grid-cols-2 gap-4 text-sm font-medium text-brand-800">
+                    <div class="flex items-center gap-3 bg-brand-50 p-3 rounded-lg border border-brand-100">
+                        <span class="text-xl">🧓</span> <div><span class="font-bold text-brand-900 block">Elderly Users</span>Larger text & high contrast.</div>
+                    </div>
+                    <div class="flex items-center gap-3 bg-brand-50 p-3 rounded-lg border border-brand-100">
+                        <span class="text-xl">🌱</span> <div><span class="font-bold text-brand-900 block">Beginners</span>Clear instructions & tooltips.</div>
+                    </div>
+                    <div class="flex items-center gap-3 bg-brand-50 p-3 rounded-lg border border-brand-100">
+                        <span class="text-xl">🦯</span> <div><span class="font-bold text-brand-900 block">Visual Impairment</span>Robust screen reader support.</div>
+                    </div>
+                    <div class="flex items-center gap-3 bg-brand-50 p-3 rounded-lg border border-brand-100">
+                        <span class="text-xl">🖐️</span> <div><span class="font-bold text-brand-900 block">Motor Limitations</span>Larger touch targets & spacing.</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ==========================================
+             SLIDE 4: DESKTOP, WEB & MOBILE
+             ========================================== -->
+        <section class="slide" id="slide-4" data-section="Platforms">
+             <header class="mb-8 slide-up">
+                <span class="text-brand-500 font-bold tracking-widest text-sm uppercase">Platforms</span>
+                <h2 class="text-4xl font-bold text-brand-950 mt-2">Desktop, Web & Mobile Banking</h2>
+                <p class="text-lg text-brand-700 mt-2 font-medium italic">"Responsive design does not automatically mean good mobile UX."</p>
+            </header>
+
+            <div class="flex flex-1 gap-6 slide-up delay-100">
+                <div class="w-1/4 flex flex-col gap-4">
+                    <button class="text-left p-4 rounded-xl border-2 border-brand-600 bg-brand-50 font-bold text-brand-900 transition-all device-btn" data-target="mobile-view" onclick="switchDevice(this)">
+                        📱 Mobile Banking
+                    </button>
+                    <button class="text-left p-4 rounded-xl border-2 border-transparent hover:border-brand-200 hover:bg-slate-50 font-medium text-slate-600 transition-all device-btn" data-target="desktop-view" onclick="switchDevice(this)">
+                        💻 Desktop Banking
+                    </button>
+                    <button class="text-left p-4 rounded-xl border-2 border-transparent hover:border-brand-200 hover:bg-slate-50 font-medium text-slate-600 transition-all device-btn" data-target="web-view" onclick="switchDevice(this)">
+                        🌐 Web / Responsive
+                    </button>
+                </div>
+
+                <div class="w-3/4 bg-slate-50 rounded-2xl border border-slate-200 p-8 flex items-center justify-center relative overflow-hidden shadow-inner">
+                    <!-- Mobile View -->
+                    <div id="mobile-view" class="device-content absolute w-full h-full flex items-center justify-center gap-12 transition-opacity duration-300">
+                        <div class="w-[280px] h-[580px] border-8 border-slate-800 rounded-[2rem] bg-white shadow-xl overflow-hidden relative flex flex-col">
+                            <div class="bg-brand-600 h-16 w-full flex items-center px-4 justify-between text-white font-bold">
+                                <span>☰</span><span>BankApp</span><span>👤</span>
+                            </div>
+                            <div class="p-4 space-y-4 flex-1">
+                                <div class="h-24 bg-brand-50 rounded-xl border border-brand-100 p-4">
+                                    <div class="text-xs text-brand-600 font-bold uppercase">Balance</div>
+                                    <div class="text-2xl font-black text-brand-900 mt-1">₹45,250</div>
+                                </div>
+                                <button class="w-full bg-brand-600 text-white rounded-lg py-3 font-bold shadow text-sm">Send Money</button>
+                                <button class="w-full bg-white border border-slate-200 text-slate-700 rounded-lg py-3 font-bold shadow-sm text-sm flex justify-center items-center gap-2">
+                                    <span>👁️</span> Biometric Login Ready
+                                </button>
+                            </div>
+                        </div>
+                        <div class="max-w-sm space-y-4 bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
+                            <h3 class="text-xl font-bold text-brand-900">Mobile HCI Focus</h3>
+                            <ul class="space-y-3">
+                                <li class="text-sm text-brand-800 border-l-2 border-brand-500 pl-3"><strong>Touch Targets:</strong> Large buttons for thumbs.</li>
+                                <li class="text-sm text-brand-800 border-l-2 border-brand-500 pl-3"><strong>Navigation:</strong> Simplified, single-column layout.</li>
+                                <li class="text-sm text-brand-800 border-l-2 border-brand-500 pl-3"><strong>Sensors:</strong> Biometric login integration.</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <!-- Desktop View -->
+                    <div id="desktop-view" class="device-content absolute w-full h-full flex items-center justify-center gap-8 transition-opacity duration-300 opacity-0 pointer-events-none">
+                         <div class="w-[600px] h-[400px] border-[8px] border-slate-300 rounded-lg bg-white shadow-2xl overflow-hidden flex flex-col">
+                            <div class="bg-brand-900 h-12 w-full flex items-center px-6 gap-8 text-white/80 text-sm font-medium">
+                                <div class="font-bold text-white text-lg">BankApp</div>
+                                <div class="text-white border-b-2 border-brand-400">Dashboard</div> <div>Transfers</div> <div>Investments</div>
+                            </div>
+                            <div class="flex-1 p-6 flex gap-6 bg-slate-50">
+                                <div class="w-1/3 space-y-4">
+                                     <div class="bg-white rounded-lg border border-slate-200 p-4 shadow-sm">
+                                        <div class="text-xs text-slate-500 uppercase font-bold">Checking</div>
+                                        <div class="text-xl font-black text-brand-900">₹45,250</div>
+                                    </div>
+                                     <div class="bg-white rounded-lg border border-slate-200 p-4 shadow-sm">
+                                        <div class="text-xs text-slate-500 uppercase font-bold">Savings</div>
+                                        <div class="text-xl font-black text-brand-900">₹1,12,000</div>
+                                    </div>
+                                </div>
+                                <div class="w-2/3 bg-white rounded-lg border border-slate-200 p-4 shadow-sm">
+                                    <div class="text-sm font-bold text-slate-800 border-b pb-2 mb-3">Recent Transactions</div>
+                                    <div class="flex justify-between text-xs py-2 border-b"><span class="text-slate-600">Amazon Pay</span><span class="font-bold text-red-500">-₹1,200</span></div>
+                                    <div class="flex justify-between text-xs py-2 border-b"><span class="text-slate-600">Salary Credit</span><span class="font-bold text-green-500">+₹45,000</span></div>
+                                    <div class="flex justify-between text-xs py-2"><span class="text-slate-600">Netflix</span><span class="font-bold text-red-500">-₹649</span></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="max-w-[250px] space-y-4 bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
+                            <h3 class="text-xl font-bold text-brand-900">Desktop HCI Focus</h3>
+                            <ul class="space-y-3">
+                                <li class="text-sm text-brand-800 border-l-2 border-brand-500 pl-3"><strong>Layout:</strong> Multi-panel information architecture.</li>
+                                <li class="text-sm text-brand-800 border-l-2 border-brand-500 pl-3"><strong>Interaction:</strong> Mouse precision and keyboard shortcuts.</li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <!-- Web View -->
+                    <div id="web-view" class="device-content absolute w-full h-full flex flex-col items-center justify-center gap-8 transition-opacity duration-300 opacity-0 pointer-events-none">
+                        <div class="text-center text-brand-900 max-w-2xl bg-white p-8 rounded-2xl border border-brand-100 shadow-sm">
+                             <h3 class="text-3xl font-bold mb-4 text-brand-600">Responsive Web</h3>
+                             <p class="text-lg text-brand-800 mb-6">Web banking must adapt fluidly between desktop and mobile browsers, ensuring cross-device consistency.</p>
+                             <div class="flex justify-center gap-4">
+                                 <div class="w-32 h-20 border-2 border-brand-300 rounded flex items-center justify-center font-bold text-brand-500">Desktop</div>
+                                 <span class="text-brand-300 self-center">↔</span>
+                                 <div class="w-20 h-20 border-2 border-brand-300 rounded flex items-center justify-center font-bold text-brand-500">Tablet</div>
+                                 <span class="text-brand-300 self-center">↔</span>
+                                 <div class="w-12 h-20 border-2 border-brand-300 rounded flex items-center justify-center font-bold text-xs text-brand-500">Mobile</div>
+                             </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+            <script>
+                function switchDevice(btn) {
+                    document.querySelectorAll('.device-btn').forEach(b => {
+                        b.classList.remove('border-brand-600', 'bg-brand-50', 'text-brand-900');
+                        b.classList.add('border-transparent', 'text-slate-600');
+                    });
+                    btn.classList.add('border-brand-600', 'bg-brand-50', 'text-brand-900');
+                    btn.classList.remove('border-transparent', 'text-slate-600');
+
+                    document.querySelectorAll('.device-content').forEach(c => {
+                        c.classList.remove('opacity-100');
+                        c.classList.add('opacity-0', 'pointer-events-none');
+                    });
+                    const target = document.getElementById(btn.dataset.target);
+                    target.classList.remove('opacity-0', 'pointer-events-none');
+                    target.classList.add('opacity-100');
+                }
+            </script>
+        </section>
+
+        <!-- ==========================================
+             SLIDE 5: USER-CENTERED DESIGN PROCESS
+             ========================================== -->
+        <section class="slide" id="slide-5" data-section="Process">
+             <header class="mb-16 slide-up">
+                <span class="text-brand-500 font-bold tracking-widest text-sm uppercase">Process</span>
+                <h2 class="text-4xl font-bold text-brand-950 mt-2">User-Centered Design Process</h2>
+                <p class="text-lg text-brand-700 mt-2">Click each stage of the Iterative Lifecycle to view definitions.</p>
+            </header>
+
+            <div class="relative w-full max-w-5xl mx-auto slide-up delay-200">
+                <div class="absolute top-1/2 left-0 w-full h-1 bg-brand-100 -translate-y-1/2 z-0"></div>
+                <div class="absolute top-1/2 left-0 w-full h-8 -translate-y-1/2 z-0 flex justify-center items-end opacity-20">
+                     <svg width="80%" height="20" viewBox="0 0 100 20" preserveAspectRatio="none"><path d="M0,10 Q50,30 100,10" fill="none" stroke="#0284c7" stroke-width="2" stroke-dasharray="5,5"/></svg>
+                </div>
+                
+                <div class="relative z-10 flex justify-between w-full">
+                    <div class="flex flex-col items-center group cursor-pointer w-24" onclick="showProcess('understand')">
+                        <div class="w-14 h-14 rounded-full bg-white border-4 border-brand-500 flex items-center justify-center font-bold text-brand-600 shadow-md transition-transform group-hover:scale-110">1</div>
+                        <span class="text-sm font-bold text-brand-900 mt-3">Understand</span>
+                    </div>
+                    <div class="flex flex-col items-center group cursor-pointer w-24" onclick="showProcess('conceptualize')">
+                        <div class="w-14 h-14 rounded-full bg-white border-4 border-brand-300 flex items-center justify-center font-bold text-brand-500 shadow-sm transition-transform group-hover:scale-110">2</div>
+                        <span class="text-sm font-bold text-brand-700 mt-3">Conceptualize</span>
+                    </div>
+                    <div class="flex flex-col items-center group cursor-pointer w-24" onclick="showProcess('design')">
+                        <div class="w-14 h-14 rounded-full bg-white border-4 border-brand-300 flex items-center justify-center font-bold text-brand-500 shadow-sm transition-transform group-hover:scale-110">3</div>
+                        <span class="text-sm font-bold text-brand-700 mt-3">Design</span>
+                    </div>
+                     <div class="flex flex-col items-center group cursor-pointer w-24" onclick="showProcess('prototype')">
+                        <div class="w-14 h-14 rounded-full bg-white border-4 border-brand-300 flex items-center justify-center font-bold text-brand-500 shadow-sm transition-transform group-hover:scale-110">4</div>
+                        <span class="text-sm font-bold text-brand-700 mt-3">Prototype</span>
+                    </div>
+                    <div class="flex flex-col items-center group cursor-pointer w-24" onclick="showProcess('evaluate')">
+                        <div class="w-14 h-14 rounded-full bg-white border-4 border-brand-300 flex items-center justify-center font-bold text-brand-500 shadow-sm transition-transform group-hover:scale-110">5</div>
+                        <span class="text-sm font-bold text-brand-700 mt-3">Evaluate</span>
+                    </div>
+                    <div class="flex flex-col items-center group cursor-pointer w-24" onclick="showProcess('iterate')">
+                        <div class="w-14 h-14 rounded-full bg-brand-50 border-4 border-brand-500 border-dashed flex items-center justify-center font-bold text-brand-600 shadow-sm transition-transform group-hover:scale-110 group-hover:rotate-180 duration-500">↺</div>
+                        <span class="text-sm font-bold text-brand-900 mt-3">Iterate</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-16 max-w-4xl mx-auto bg-brand-50 border border-brand-200 rounded-2xl p-10 min-h-[220px] flex items-center shadow-sm slide-up delay-400">
+                <div id="process-detail" class="w-full">
+                    <h3 class="text-3xl font-bold text-brand-900 mb-2">Iterative Lifecycle</h3>
+                    <p class="text-brand-700 text-lg">Click on the timeline above to view specific details about how banking interfaces are researched, modeled, and refined.</p>
+                </div>
+            </div>
+
+            <script>
+                const procData = {
+                    'understand': { t: 'Understanding Interaction', p: 'Analyzing user needs, gathering requirements, and understanding the context in which the banking app is used. Who is the user? What are their goals?' },
+                    'conceptualize': { t: 'Conceptual Model & Framework', p: 'Defining the structural framework. How will the system appear? (e.g., a "digital ledger" or "wallet" conceptual model). Determining navigation paradigms.' },
+                    'design': { t: 'Design Requirements', p: 'Translating concepts into concrete UI decisions. Creating layouts, visual hierarchies, and planning specific design requirements for each banking task.' },
+                    'prototype': { t: 'Prototyping', p: 'Building testable versions of the interface, ranging from structural wireframes to realistic high-fidelity prototypes using tool support.' },
+                    'evaluate': { t: 'Evaluate & User Experience', p: 'Testing the prototype with real users to measure success against design requirements. Finding flaws that degrade the User Experience.' },
+                    'iterate': { t: 'Iterative Lifecycle', p: 'HCI is rarely perfect on the first try. Based on evaluation results, we iterate—returning to earlier phases to refine the conceptual model or design.' }
+                };
+                function showProcess(s) {
+                    const el = document.getElementById('process-detail');
+                    el.style.opacity = 0;
+                    setTimeout(() => {
+                        el.innerHTML = `<h3 class="text-2xl font-bold text-brand-900 mb-3">${procData[s].t}</h3><p class="text-brand-800 text-lg leading-relaxed">${procData[s].p}</p>`;
+                        el.style.opacity = 1; el.style.transition = 'opacity 0.3s ease';
+                    }, 150);
+                }
+            </script>
+        </section>
+
+        <!-- ==========================================
+             SLIDE 6: PERSONAS & SCENARIOS
+             ========================================== -->
+        <section class="slide bg-slate-50" id="slide-6" data-section="Users">
+            <header class="mb-10 slide-up">
+                <span class="text-brand-500 font-bold tracking-widest text-sm uppercase">Users</span>
+                <h2 class="text-4xl font-bold text-brand-950 mt-2">Personas, Goals, Scenarios & Requirements</h2>
+            </header>
+
+            <div class="flex flex-col md:flex-row gap-8 flex-1 slide-up delay-100">
+                
+                <!-- Persona -->
+                <div class="w-full md:w-1/3 bg-white rounded-3xl p-8 shadow-sm border border-slate-200 flex flex-col items-center text-center">
+                    <div class="text-xs font-bold text-brand-400 tracking-widest uppercase mb-4 w-full text-left">Persona</div>
+                    <div class="w-32 h-32 rounded-full bg-brand-100 mb-6 flex items-center justify-center overflow-hidden border-4 border-white shadow-md text-6xl font-bold text-brand-300">
+                        A
+                    </div>
+                    <h3 class="text-2xl font-black text-brand-950">Arun</h3>
+                    <p class="text-brand-600 font-medium mb-6">21 years old • College Student</p>
+                    
+                    <div class="w-full text-left space-y-6 border-t border-slate-100 pt-6">
+                        <div>
+                            <p class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Goal</p>
+                            <p class="text-sm font-bold text-brand-900 bg-brand-50 p-3 rounded-lg border border-brand-100">"Complete digital banking tasks quickly and safely without confusion."</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Scenario & Req -->
+                <div class="w-full md:w-2/3 flex flex-col gap-6">
+                    <div class="bg-white p-8 rounded-3xl shadow-sm border border-slate-200">
+                        <div class="text-xs font-bold text-brand-400 tracking-widest uppercase mb-2">Scenario</div>
+                        <h4 class="text-xl font-bold text-brand-900 mb-4">"Arun wants to transfer ₹2,000 to Rahul."</h4>
+                        
+                        <div class="text-xs font-bold text-slate-400 tracking-widest uppercase mb-2 mt-6">Task Flow</div>
+                        <div class="flex flex-wrap items-center gap-2 text-xs font-bold text-brand-800">
+                            <span class="px-3 py-2 bg-slate-100 rounded">Login</span> <span>→</span>
+                            <span class="px-3 py-2 bg-slate-100 rounded">Dashboard</span> <span>→</span>
+                            <span class="px-3 py-2 bg-brand-100 text-brand-700 rounded border border-brand-200 shadow-sm">Send Money</span> <span>→</span>
+                            <span class="px-3 py-2 bg-slate-100 rounded">Beneficiary</span> <span>→</span>
+                            <span class="px-3 py-2 bg-slate-100 rounded">Amount</span> <span>→</span>
+                            <span class="px-3 py-2 bg-slate-100 rounded">Review</span> <span>→</span>
+                            <span class="px-3 py-2 bg-slate-100 rounded">Confirm</span> <span>→</span>
+                            <span class="px-3 py-2 bg-success-50 text-success-600 border border-success-200 rounded">Success</span>
+                        </div>
+                    </div>
+
+                    <div class="bg-brand-50 p-8 rounded-3xl text-brand-900 border border-brand-200 shadow-sm flex-1">
+                        <div class="text-xs font-bold text-brand-600 tracking-widest uppercase mb-4">Design Requirements</div>
+                        <div class="grid grid-cols-2 gap-x-8 gap-y-4">
+                            <div class="flex items-start gap-2"><div class="text-brand-500 font-bold">✓</div><p class="text-sm text-brand-800">Clear <strong class="text-brand-900">Send Money</strong> action</p></div>
+                            <div class="flex items-start gap-2"><div class="text-brand-500 font-bold">✓</div><p class="text-sm text-brand-800"><strong class="text-brand-900">Visible balance</strong> at all times</p></div>
+                            <div class="flex items-start gap-2"><div class="text-brand-500 font-bold">✓</div><p class="text-sm text-brand-800">Strict <strong class="text-brand-900">Error prevention</strong> on input</p></div>
+                            <div class="flex items-start gap-2"><div class="text-brand-500 font-bold">✓</div><p class="text-sm text-brand-800">Explicit <strong class="text-brand-900">Confirmation</strong> step</p></div>
+                            <div class="flex items-start gap-2"><div class="text-brand-500 font-bold">✓</div><p class="text-sm text-brand-800"><strong class="text-brand-900">Immediate feedback</strong> on success</p></div>
+                            <div class="flex items-start gap-2"><div class="text-brand-500 font-bold">✓</div><p class="text-sm text-brand-800"><strong class="text-brand-900">Easy recovery</strong> if error occurs</p></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ==========================================
+             SLIDE 7: REAL-WORLD CASE STUDY
+             ========================================== -->
+        <section class="slide bg-brand-900 text-white" id="slide-7" data-section="Case Study">
+            <div class="absolute inset-0 opacity-10 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-white via-transparent to-transparent pointer-events-none"></div>
+            
+            <header class="mb-12 relative z-10 slide-up">
+                <span class="text-brand-300 font-bold tracking-widest text-sm uppercase">Real-World Case Study</span>
+                <h2 class="text-5xl font-bold text-white mt-2">BofI / Axos Bank</h2>
+                <p class="text-2xl text-brand-200 mt-4 font-light">Consumer Banking Application Redesign</p>
+            </header>
+
+            <div class="flex flex-col md:flex-row gap-12 relative z-10 slide-up delay-200 flex-1 items-center">
+                <div class="w-full md:w-1/2 space-y-6">
+                    <div class="inline-block bg-brand-800 text-brand-100 px-4 py-2 rounded-lg text-sm font-bold border border-brand-700 shadow-sm">Published UX Case Study</div>
+                    <p class="text-xl leading-relaxed text-brand-50 font-light">
+                        Documented usability challenges in the account opening flow prompted a comprehensive UX analysis and redesign, leading to significant reported results.
+                    </p>
+                    
+                    <div class="grid grid-cols-2 gap-4 mt-8">
+                        <div class="bg-brand-800/50 p-4 rounded-xl border border-brand-700">
+                            <div class="text-brand-400 font-bold text-sm mb-1">Focus 1</div>
+                            <div class="text-white font-medium">Mobile optimization & breaking long pages</div>
+                        </div>
+                        <div class="bg-brand-800/50 p-4 rounded-xl border border-brand-700">
+                            <div class="text-brand-400 font-bold text-sm mb-1">Focus 2</div>
+                            <div class="text-white font-medium">Reducing cognitive load & visual noise</div>
+                        </div>
+                        <div class="bg-brand-800/50 p-4 rounded-xl border border-brand-700">
+                            <div class="text-brand-400 font-bold text-sm mb-1">Focus 3</div>
+                            <div class="text-white font-medium">Removing unnecessary fields</div>
+                        </div>
+                        <div class="bg-brand-800/50 p-4 rounded-xl border border-brand-700">
+                            <div class="text-brand-400 font-bold text-sm mb-1">Focus 4</div>
+                            <div class="text-white font-medium">Improving product selection & consistency</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="w-full md:w-1/2 flex justify-center">
+                     <div class="flex flex-col gap-4 text-center items-center">
+                        <div class="w-64 bg-white text-brand-900 px-6 py-4 rounded-xl font-bold shadow-lg text-sm border-2 border-brand-100">BEFORE</div>
+                        <div class="text-brand-400 font-bold text-sm">↓ UX ANALYSIS ↓</div>
+                        <div class="w-64 bg-brand-600 text-white px-6 py-4 rounded-xl font-bold shadow-lg text-sm border border-brand-500 scale-105">REDESIGN</div>
+                        <div class="text-brand-400 font-bold text-sm">↓ REPORTED RESULTS ↓</div>
+                        <div class="w-64 bg-brand-100 text-brand-900 px-6 py-4 rounded-xl font-bold shadow-lg text-sm border-2 border-brand-200">AFTER</div>
+                     </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ==========================================
+             SLIDE 8: BEFORE REDESIGN
+             ========================================== -->
+        <section class="slide bg-slate-50" id="slide-8" data-section="Case Study">
+            <header class="mb-4 slide-up">
+                <span class="text-brand-500 font-bold tracking-widest text-sm uppercase">Documented Usability Challenges</span>
+                <h2 class="text-4xl font-bold text-brand-950 mt-2">Before Redesign</h2>
+                <div class="inline-block bg-yellow-100 text-yellow-800 px-3 py-1 rounded text-xs font-bold mt-3 border border-yellow-200">
+                    Illustrative reconstruction based on usability issues described in the published case study. Not an exact reproduction.
+                </div>
+                <p class="text-slate-600 mt-2 text-sm font-bold">Click the red hotspots to reveal HCI problems.</p>
+            </header>
+
+            <div class="flex justify-center flex-1 slide-up delay-100 items-center">
+                <!-- Old Mobile Interface -->
+                <div class="w-[320px] h-[550px] bg-white border-2 border-slate-300 rounded-3xl shadow-xl overflow-y-auto relative p-0">
+                    <div class="bg-slate-200 p-3 text-center text-xs font-bold text-slate-600 border-b border-slate-300 sticky top-0 z-20">Open Account (Step 1)</div>
+                    
+                    <div class="p-4 space-y-4">
+                        <!-- Hotspot 1 & 2: Cognitive Load & Too much info -->
+                        <div class="relative bg-slate-50 border border-slate-200 p-3 rounded">
+                            <div class="hotspot" style="top: -10px; left: -10px;"></div>
+                            <div class="hotspot-content"><strong>High cognitive load & Too much information:</strong> Dense block of text, unclear hierarchy.</div>
+                            <h3 class="font-bold text-xs">Select Products (Select all that apply)</h3>
+                            <p class="text-[9px] text-slate-500 mt-1 leading-tight">Please review all our offerings below before proceeding to the next step. Ensure you read terms and conditions carefully as they apply to minimum balances and monthly fees. Check all boxes that you require today.</p>
+                        </div>
+                        
+                        <!-- Hotspot 6: Visual noise -->
+                        <div class="relative bg-slate-100 p-3 border border-slate-300 rounded text-xs space-y-3">
+                            <div class="hotspot" style="top: 20%; right: -10px;"></div>
+                            <div class="hotspot-content"><strong>Visual Noise:</strong> Cluttered layout with small touch targets makes selection error-prone.</div>
+                            <label class="flex items-center gap-2"><input type="checkbox"> Essential Checking ($500)</label>
+                            <label class="flex items-center gap-2"><input type="checkbox"> Rewards Checking ($1000)</label>
+                            <label class="flex items-center gap-2"><input type="checkbox"> CashBack Checking ($1500)</label>
+                            <label class="flex items-center gap-2"><input type="checkbox"> High Yield Savings ($250)</label>
+                            <label class="flex items-center gap-2"><input type="checkbox"> Money Market ($5000)</label>
+                            <label class="flex items-center gap-2"><input type="checkbox"> CD 12-Month ($1000)</label>
+                        </div>
+
+                        <!-- Hotspot 5: Unnecessary fields -->
+                        <div class="relative pt-4 border-t border-slate-200">
+                            <div class="hotspot" style="top: 30%; left: -10px;"></div>
+                            <div class="hotspot-content"><strong>Unnecessary fields:</strong> Asking for optional/secondary info too early increases friction.</div>
+                            <h3 class="font-bold text-xs mb-2">Personal Details</h3>
+                            <input type="text" placeholder="First Name" class="w-full text-xs p-2 border border-slate-300 mb-2 bg-white">
+                            <input type="text" placeholder="Middle Name (Optional)" class="w-full text-xs p-2 border border-slate-300 mb-2 bg-white">
+                            <input type="text" placeholder="Last Name" class="w-full text-xs p-2 border border-slate-300 mb-2 bg-white">
+                            <input type="text" placeholder="Suffix (Optional)" class="w-full text-xs p-2 border border-slate-300 mb-2 bg-white">
+                        </div>
+
+                        <!-- Hotspot 3 & 4: Long scrolling & Action below fold -->
+                        <div class="relative pb-6 mt-8">
+                            <div class="hotspot" style="bottom: 10px; left: 50%;"></div>
+                            <div class="hotspot-content"><strong>Long scrolling:</strong> The primary action button is pushed far below the fold.</div>
+                            <button class="w-full bg-slate-300 text-slate-600 p-3 text-xs font-bold rounded">Continue to Step 2 of 5</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ==========================================
+             SLIDE 9: AFTER REDESIGN
+             ========================================== -->
+        <section class="slide" id="slide-9" data-section="Case Study">
+            <header class="mb-6 slide-up">
+                <span class="text-brand-500 font-bold tracking-widest text-sm uppercase">HCI Improvements</span>
+                <h2 class="text-4xl font-bold text-brand-950 mt-2">After Redesign</h2>
+                <div class="inline-block bg-brand-50 text-brand-800 px-3 py-1 rounded text-xs font-bold mt-3 border border-brand-200">
+                    Illustrative reconstruction based on the documented redesign approach.
+                </div>
+            </header>
+
+            <div class="flex flex-col lg:flex-row gap-10 flex-1 slide-up delay-100">
+                <!-- Slider -->
+                <div class="w-full lg:w-2/3 h-[450px]">
+                    <div class="ba-slider shadow-xl h-full" id="ba-slider">
+                        <!-- AFTER Image -->
+                        <div class="ba-image bg-brand-50 flex-col justify-start pt-6">
+                            <span class="ba-label ba-label-after shadow-sm">After: Smaller Steps, Clean</span>
+                            <div class="w-[280px] bg-white border border-brand-100 rounded-2xl shadow-sm overflow-hidden mt-4">
+                                <div class="bg-brand-600 p-3 text-white text-center font-bold text-xs">Open Account</div>
+                                <div class="flex justify-between px-4 py-2 bg-brand-50 border-b border-brand-100 text-[10px] text-brand-600 font-bold uppercase tracking-wide">
+                                    <span>Step 1 of 3</span> <span>Product Selection</span>
+                                </div>
+                                <div class="p-4 space-y-3">
+                                    <h3 class="text-sm font-bold text-brand-900 mb-2">Choose an account</h3>
+                                    <div class="border-2 border-brand-500 rounded-xl p-3 bg-brand-50 relative cursor-pointer shadow-sm">
+                                        <div class="absolute top-3 right-3 w-4 h-4 rounded-full bg-brand-500 flex items-center justify-center"><div class="w-1.5 h-1.5 bg-white rounded-full"></div></div>
+                                        <div class="font-bold text-brand-900 text-sm">Rewards Checking</div>
+                                        <div class="text-xs text-brand-600 mt-1 font-medium">No monthly fees.</div>
+                                    </div>
+                                    <div class="border border-slate-200 rounded-xl p-3 bg-white">
+                                        <div class="absolute top-3 right-3 w-4 h-4 rounded-full border-2 border-slate-300"></div>
+                                        <div class="font-bold text-slate-700 text-sm">High Yield Savings</div>
+                                    </div>
+                                    <button class="w-full bg-brand-600 text-white rounded-xl py-3 mt-4 text-sm font-bold shadow-md">Next: Personal Info</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- BEFORE Image -->
+                        <div class="ba-image ba-image-before flex-col justify-start pt-6" id="ba-before">
+                            <span class="ba-label ba-label-before shadow-sm">Before: Cluttered Flow</span>
+                            <div class="w-[280px] bg-white border border-slate-300 rounded-sm shadow-sm overflow-hidden grayscale mt-4">
+                                <div class="bg-slate-200 p-3 text-center font-bold text-xs text-slate-700">Open Account</div>
+                                <div class="p-3 space-y-2">
+                                    <p class="text-[9px] text-slate-500">Select all that apply below...</p>
+                                    <div class="bg-slate-100 p-2 border border-slate-300 text-xs space-y-2">
+                                        <div>☑ Checking 1</div><div>☐ Checking 2</div><div>☑ Savings 1</div>
+                                    </div>
+                                    <input type="text" placeholder="First Name" class="w-full text-xs p-1.5 border border-slate-300">
+                                    <button class="w-full bg-slate-300 py-2 text-xs mt-2 font-bold text-slate-600">Continue</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="ba-slider-handle" id="ba-handle">
+                            <div class="ba-slider-button"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 9l-4 3 4 3M16 9l4 3-4 3"/></svg></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Measurable Results -->
+                <div class="w-full lg:w-1/3 flex flex-col justify-center gap-4">
+                    <div class="bg-white p-5 rounded-2xl border border-brand-100 shadow-sm">
+                        <p class="text-xs font-bold text-brand-500 uppercase tracking-wider mb-2">Median Submission Time</p>
+                        <div class="flex items-center gap-4 text-3xl font-extrabold text-brand-900">
+                            <span class="text-slate-300 line-through">15 min</span> <span class="text-brand-300">→</span> <span class="text-success-500">11 min</span>
+                        </div>
+                    </div>
+                    <div class="bg-white p-5 rounded-2xl border border-brand-100 shadow-sm">
+                        <p class="text-xs font-bold text-brand-500 uppercase tracking-wider mb-2">Completed < 10 mins</p>
+                        <div class="flex items-center gap-4 text-3xl font-extrabold text-brand-900">
+                            <span class="text-slate-300">30%</span> <span class="text-brand-300">→</span> <span class="text-success-500">40%</span>
+                        </div>
+                    </div>
+                     <div class="bg-brand-900 p-5 rounded-2xl text-white shadow-md">
+                        <p class="text-xs font-bold text-brand-300 uppercase tracking-wider mb-2">Reported Improvement</p>
+                        <div class="text-4xl font-black text-white">33%</div>
+                    </div>
+                    <p class="text-[10px] uppercase tracking-widest text-brand-400 font-bold mt-2">Reported results from published case study. (Around 52% mobile/tablet traffic)</p>
+                </div>
+            </div>
+            
+            <script>
+                const slider = document.getElementById('ba-slider');
+                const beforeImg = document.getElementById('ba-before');
+                const handle = document.getElementById('ba-handle');
+                let isDragging = false;
+                const moveSlider = (e) => {
+                    if (!isDragging) return;
+                    let x = e.type.includes('mouse') ? e.pageX : e.touches[0].pageX;
+                    let rect = slider.getBoundingClientRect();
+                    let pos = Math.max(0, Math.min(x - rect.left, rect.width));
+                    let percent = (pos / rect.width) * 100;
+                    beforeImg.style.width = percent + '%';
+                    handle.style.left = percent + '%';
+                };
+                handle.addEventListener('mousedown', () => isDragging = true);
+                handle.addEventListener('touchstart', () => isDragging = true);
+                window.addEventListener('mouseup', () => isDragging = false);
+                window.addEventListener('touchend', () => isDragging = false);
+                window.addEventListener('mousemove', moveSlider);
+                window.addEventListener('touchmove', moveSlider);
+            </script>
+        </section>
+
+        <!-- ==========================================
+             SLIDE 10: POORER HCI VS IMPROVED HCI
+             ========================================== -->
+        <section class="slide bg-slate-50" id="slide-10" data-section="Comparison">
+            <header class="mb-8 slide-up">
+                <span class="text-brand-500 font-bold tracking-widest text-sm uppercase">Evaluation</span>
+                <h2 class="text-4xl font-bold text-brand-950 mt-2">Poorer HCI vs Improved HCI</h2>
+                <p class="text-lg text-brand-700 mt-2">Click categories to compare design approaches.</p>
+            </header>
+
+            <div class="flex gap-8 flex-1 slide-up delay-100 h-full">
+                <!-- Sidebar -->
+                <div class="w-1/3 flex flex-col gap-2">
+                    <button class="comp-btn w-full text-left px-5 py-4 rounded-xl font-bold text-sm bg-brand-600 text-white shadow-md transition-all" onclick="showComp('feedback', this)">Feedback</button>
+                    <button class="comp-btn w-full text-left px-5 py-4 rounded-xl font-bold text-sm bg-white text-brand-900 border border-slate-200 hover:border-brand-300 transition-all" onclick="showComp('error', this)">Error Handling</button>
+                    <button class="comp-btn w-full text-left px-5 py-4 rounded-xl font-bold text-sm bg-white text-brand-900 border border-slate-200 hover:border-brand-300 transition-all" onclick="showComp('control', this)">User Control</button>
+                    <button class="comp-btn w-full text-left px-5 py-4 rounded-xl font-bold text-sm bg-white text-brand-900 border border-slate-200 hover:border-brand-300 transition-all" onclick="showComp('cognitive', this)">Cognitive Load</button>
+                    <button class="comp-btn w-full text-left px-5 py-4 rounded-xl font-bold text-sm bg-white text-brand-900 border border-slate-200 hover:border-brand-300 transition-all" onclick="showComp('nav', this)">Navigation</button>
+                    <button class="comp-btn w-full text-left px-5 py-4 rounded-xl font-bold text-sm bg-white text-brand-900 border border-slate-200 hover:border-brand-300 transition-all" onclick="showComp('vis', this)">Visibility</button>
+                    <button class="comp-btn w-full text-left px-5 py-4 rounded-xl font-bold text-sm bg-white text-brand-900 border border-slate-200 hover:border-brand-300 transition-all" onclick="showComp('eff', this)">Efficiency</button>
+                    <button class="comp-btn w-full text-left px-5 py-4 rounded-xl font-bold text-sm bg-white text-brand-900 border border-slate-200 hover:border-brand-300 transition-all" onclick="showComp('acc', this)">Accessibility</button>
+                </div>
+
+                <!-- Display Area -->
+                <div class="w-2/3 bg-white rounded-3xl border border-slate-200 shadow-sm p-8 flex flex-col relative overflow-hidden h-[450px]">
+                    
+                    <div id="comp-display" class="flex-1 flex gap-6 items-center">
+                        <!-- Dynamic Content injected via JS -->
+                    </div>
+
+                </div>
+            </div>
+
+            <script>
+                const compData = {
+                    'feedback': {
+                        poor: { title: 'Poorer HCI', ui: '<div class="bg-white border-2 border-slate-300 p-4 rounded text-center text-red-600 font-mono text-sm font-bold shadow-sm">ERROR 104 — TRANSACTION FAILED</div>' },
+                        good: { title: 'Improved HCI', ui: '<div class="bg-brand-50 border border-brand-200 p-4 rounded text-brand-900 text-sm shadow-sm">⚠ <strong>Insufficient balance.</strong><br>Available balance: ₹25,450.<br><span class="text-brand-600 mt-2 block">Please enter a smaller amount.</span></div>' }
+                    },
+                    'error': {
+                        poor: { title: 'Poorer HCI', ui: '<div class="bg-slate-100 p-4 rounded text-sm text-slate-600">Allows user to submit a bad form, then clears all fields and shows a generic error at the top.</div>' },
+                        good: { title: 'Improved HCI', ui: '<div class="bg-brand-50 p-4 rounded text-sm text-brand-800">Inline validation prevents typing invalid characters. Submit button remains disabled until data is valid.</div>' }
+                    },
+                    'control': {
+                        poor: { title: 'Poorer HCI', ui: '<div class="bg-slate-100 p-4 rounded text-sm text-slate-600 flex flex-col gap-2"><button class="bg-slate-300 p-2 text-slate-700 font-bold rounded">Process</button><span>No way to cancel or edit once started.</span></div>' },
+                        good: { title: 'Improved HCI', ui: '<div class="bg-brand-50 p-4 rounded text-sm text-brand-800 flex gap-2"><button class="bg-white border border-brand-200 p-2 text-brand-900 font-bold rounded">Edit Amount</button><button class="bg-brand-100 p-2 text-brand-800 font-bold rounded">Cancel</button></div>' }
+                    },
+                    'cognitive': {
+                        poor: { title: 'Poorer HCI', ui: '<div class="text-xs text-slate-500 text-justify bg-slate-50 p-4 border border-slate-200">Asking the user to read a wall of legal text while simultaneously filling out 15 form fields on a single scrolling mobile page.</div>' },
+                        good: { title: 'Improved HCI', ui: '<div class="text-sm font-medium text-brand-900 bg-brand-50 p-4 border border-brand-200 rounded-lg">Chunking information into 3 distinct, manageable steps. (e.g., Step 1: Select, Step 2: Details, Step 3: Review)</div>' }
+                    },
+                    'nav': {
+                        poor: { title: 'Poorer HCI', ui: '<div class="text-sm text-slate-600 bg-slate-50 p-4 border border-slate-200">Hidden menus within hidden menus. No breadcrumbs. User gets lost in the application flow.</div>' },
+                        good: { title: 'Improved HCI', ui: '<div class="text-sm font-bold text-brand-900 bg-brand-50 p-4 border border-brand-200 rounded-lg">Clear bottom navigation on mobile. Persistent contextual headers indicating current location.</div>' }
+                    },
+                    'vis': {
+                        poor: { title: 'Poorer HCI', ui: '<div class="text-sm text-slate-600 bg-slate-50 p-4 border border-slate-200">Account balance hidden behind a multi-click "Details" menu.</div>' },
+                        good: { title: 'Improved HCI', ui: '<div class="text-2xl font-black text-brand-900 bg-brand-50 p-4 border border-brand-200 rounded-lg text-center">₹45,250<br><span class="text-xs font-bold text-brand-500 uppercase tracking-widest">Available</span></div>' }
+                    },
+                    'eff': {
+                        poor: { title: 'Poorer HCI', ui: '<div class="text-sm text-slate-600 bg-slate-50 p-4 border border-slate-200">Forcing a user to re-type a frequent beneficiary\'s 16-digit account number every time.</div>' },
+                        good: { title: 'Improved HCI', ui: '<div class="flex gap-2 bg-brand-50 p-4 border border-brand-200 rounded-lg"><div class="w-10 h-10 rounded-full bg-brand-200 flex items-center justify-center font-bold text-brand-800">R</div><div class="w-10 h-10 rounded-full bg-brand-200 flex items-center justify-center font-bold text-brand-800">S</div><span class="text-sm font-bold text-brand-900 self-center ml-2">Recent Payees</span></div>' }
+                    },
+                    'acc': {
+                        poor: { title: 'Poorer HCI', ui: '<div class="text-sm text-slate-400 bg-slate-50 p-4 border border-slate-200">Low contrast light-grey text on white backgrounds. No screen reader tags.</div>' },
+                        good: { title: 'Improved HCI', ui: '<div class="text-sm font-black text-brand-950 bg-brand-50 p-4 border border-brand-200 rounded-lg">WCAG AAA compliant contrast. Proper aria-labels for assistive technology.</div>' }
+                    }
+                };
+
+                function renderComp(data) {
+                    return `
+                        <div class="w-1/2 h-full bg-slate-50 rounded-2xl border-2 border-slate-200 p-6 flex flex-col opacity-0 animate-[fadeIn_0.3s_ease_forwards]">
+                            <h3 class="text-lg font-bold text-slate-700 mb-6 flex items-center gap-2"><span class="text-red-500 text-2xl">✗</span> ${data.poor.title}</h3>
+                            <div class="flex-1 flex flex-col justify-center">${data.poor.ui}</div>
+                        </div>
+                        <div class="w-1/2 h-full bg-white rounded-2xl border-2 border-brand-500 p-6 flex flex-col shadow-lg opacity-0 animate-[fadeIn_0.3s_ease_forwards_0.1s]">
+                            <h3 class="text-lg font-bold text-brand-900 mb-6 flex items-center gap-2"><span class="text-success-500 text-2xl">✓</span> ${data.good.title}</h3>
+                            <div class="flex-1 flex flex-col justify-center">${data.good.ui}</div>
+                        </div>
+                    `;
+                }
+
+                function showComp(key, btn) {
+                    document.querySelectorAll('.comp-btn').forEach(b => {
+                        b.classList.remove('bg-brand-600', 'text-white', 'shadow-md');
+                        b.classList.add('bg-white', 'text-brand-900');
+                    });
+                    btn.classList.add('bg-brand-600', 'text-white', 'shadow-md');
+                    btn.classList.remove('bg-white', 'text-brand-900');
+                    
+                    const display = document.getElementById('comp-display');
+                    display.innerHTML = ''; // clear to restart animation
+                    setTimeout(() => { display.innerHTML = renderComp(compData[key]); }, 10);
+                }
+                
+                // Init first view
+                setTimeout(() => { document.querySelector('.comp-btn').click(); }, 100);
+            </script>
+        </section>
+
+        <!-- ==========================================
+             SLIDE 11: INTERACTION PROCESS & STYLES
+             ========================================== -->
+        <section class="slide" id="slide-11" data-section="Interaction">
+            <header class="mb-12 slide-up">
+                <span class="text-brand-500 font-bold tracking-widest text-sm uppercase">Process</span>
+                <h2 class="text-4xl font-bold text-brand-950 mt-2">Interaction Process & Styles</h2>
+                <p class="text-lg text-brand-700 mt-2">How users and systems communicate across different paradigms.</p>
+            </header>
+
+            <div class="flex-1 flex flex-col justify-center max-w-5xl mx-auto w-full slide-up delay-100">
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-12">
+                    <div class="bg-white p-5 rounded-xl border border-brand-100 shadow-sm text-center">
+                        <div class="w-10 h-10 bg-brand-50 rounded-full mx-auto mb-3 flex items-center justify-center text-brand-600 text-lg">👆</div>
+                        <h3 class="font-bold text-brand-900 text-sm mb-2">Direct Manipulation</h3>
+                        <p class="text-xs text-brand-700 leading-relaxed">Tapping 'Send Money'. Interfaces mimic physical real-world actions directly on screen.</p>
+                    </div>
+                    <div class="bg-white p-5 rounded-xl border border-brand-100 shadow-sm text-center">
+                        <div class="w-10 h-10 bg-brand-50 rounded-full mx-auto mb-3 flex items-center justify-center text-brand-600 text-lg">💬</div>
+                        <h3 class="font-bold text-brand-900 text-sm mb-2">Communication</h3>
+                        <p class="text-xs text-brand-700 leading-relaxed">System notifications, contextual alerts, or AI chatbot assistance for transfers.</p>
+                    </div>
+                    <div class="bg-white p-5 rounded-xl border border-brand-100 shadow-sm text-center">
+                        <div class="w-10 h-10 bg-brand-50 rounded-full mx-auto mb-3 flex items-center justify-center text-brand-600 text-lg">🤝</div>
+                        <h3 class="font-bold text-brand-900 text-sm mb-2">Collaboration</h3>
+                        <p class="text-xs text-brand-700 leading-relaxed">Joint accounts, bill splitting, and sharing payment confirmation links.</p>
+                    </div>
+                    <div class="bg-brand-900 p-5 rounded-xl shadow-md text-center text-white border border-brand-700">
+                        <div class="w-10 h-10 bg-brand-800 rounded-full mx-auto mb-3 flex items-center justify-center text-brand-300 text-lg">🎙️</div>
+                        <h3 class="font-bold text-brand-100 text-sm mb-2">Expressive Command</h3>
+                        <p class="text-xs text-brand-200 leading-relaxed">"Send ₹2,000 to Rahul." Using natural human language via voice or text prompts.</p>
+                    </div>
+                </div>
+
+                <!-- Interaction Loop -->
+                <div class="bg-brand-50 p-8 rounded-2xl border border-brand-200 shadow-sm">
+                     <h3 class="text-center text-sm font-bold text-brand-500 uppercase tracking-widest mb-8">The Visual Interaction Loop</h3>
+                     <div class="flex items-center justify-between relative">
+                        <div class="absolute top-1/2 left-8 right-8 h-0.5 bg-brand-300 -translate-y-1/2 z-0"></div>
+                        
+                        <div class="text-center w-1/5 relative z-10">
+                            <div class="font-bold text-brand-900 bg-white py-3 px-2 rounded-xl border-2 border-brand-100 shadow-sm text-sm">User Intention</div>
+                        </div>
+                        <div class="text-center w-1/5 relative z-10">
+                            <div class="font-bold text-white bg-brand-600 py-3 px-2 rounded-xl shadow-md text-sm border-2 border-brand-500">Action / Input</div>
+                        </div>
+                        <div class="text-center w-1/5 relative z-10">
+                            <div class="font-bold text-slate-700 bg-slate-100 py-3 px-2 rounded-xl border-2 border-slate-300 shadow-sm text-sm">System State</div>
+                        </div>
+                        <div class="text-center w-1/5 relative z-10">
+                            <div class="font-bold text-white bg-success-500 py-3 px-2 rounded-xl shadow-md text-sm border-2 border-success-400">Feedback</div>
+                        </div>
+                        <div class="text-center w-1/5 relative z-10">
+                            <div class="font-bold text-brand-900 bg-white py-3 px-2 rounded-xl border-2 border-brand-100 shadow-sm text-sm">User Interpretation</div>
+                        </div>
+                     </div>
+                </div>
+                
+                <p class="text-center text-xs text-brand-600 font-bold mt-8 uppercase tracking-widest">Future: Immersive Environments (AR/VR Banking Interfaces)</p>
+            </div>
+        </section>
+
+        <!-- ==========================================
+             SLIDE 12: PROTOTYPING EVOLUTION
+             ========================================== -->
+        <section class="slide bg-slate-50" id="slide-12" data-section="Prototyping">
+             <header class="mb-8 slide-up">
+                <span class="text-brand-500 font-bold tracking-widest text-sm uppercase">Construction</span>
+                <h2 class="text-4xl font-bold text-brand-950 mt-2">Prototyping Evolution & Tool Support</h2>
+            </header>
+
+            <div class="flex flex-col flex-1 slide-up delay-100">
+                <!-- Tabs -->
+                <div class="flex justify-center gap-4 mb-8">
+                    <button class="px-6 py-2 rounded-full font-bold text-sm bg-brand-600 text-white shadow proto-btn transition-all" data-proto="wireframe" onclick="switchProto(this)">Wireframe</button>
+                    <button class="px-6 py-2 rounded-full font-bold text-sm bg-white text-slate-600 border border-slate-200 hover:border-brand-300 proto-btn transition-all" data-proto="lofi" onclick="switchProto(this)">Low-Fidelity</button>
+                    <button class="px-6 py-2 rounded-full font-bold text-sm bg-white text-slate-600 border border-slate-200 hover:border-brand-300 proto-btn transition-all" data-proto="hifi" onclick="switchProto(this)">High-Fidelity</button>
+                </div>
+
+                <!-- Display -->
+                <div class="flex-1 bg-white rounded-3xl border border-slate-200 shadow-sm flex items-center justify-center p-8 relative overflow-hidden h-[450px]">
+                    
+                    <!-- Wireframe -->
+                    <div id="proto-wireframe" class="proto-content flex gap-16 items-center w-full max-w-3xl absolute opacity-100 transition-opacity duration-300">
+                        <div class="w-[280px] h-[400px] border-4 border-slate-300 bg-white p-4 space-y-4 rounded-xl flex-shrink-0 relative">
+                            <div class="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyMCIgaGVpZ2h0PSIyMCI+PGNpcmNsZSBjeD0iMSIgY3k9IjEiIHI9IjEiIGZpbGw9IiNlMmU4ZjAiLz48L3N2Zz4=')] opacity-50"></div>
+                            <div class="relative z-10">
+                                <div class="w-full h-8 border-2 border-slate-300 flex items-center justify-center text-slate-400 text-xs font-mono">Header block</div>
+                                <div class="w-20 h-20 rounded-full border-2 border-slate-300 mx-auto mt-6 flex items-center justify-center text-slate-300">Img</div>
+                                <div class="w-3/4 h-4 border-2 border-slate-300 mx-auto mt-4"></div>
+                                <div class="w-1/2 h-4 border-2 border-slate-300 mx-auto mt-2"></div>
+                                <div class="w-full h-12 border-2 border-slate-300 mt-8 flex items-center justify-center text-slate-400 text-xs font-mono">Primary Action</div>
+                            </div>
+                        </div>
+                        <div>
+                            <h3 class="font-black text-2xl text-slate-800 mb-2 uppercase tracking-widest">Wireframe</h3>
+                            <p class="text-slate-600 mb-6">Focuses entirely on structure and information architecture. No colors, no typography styling. Determines "What goes where."</p>
+                            <div class="bg-slate-100 px-4 py-2 rounded text-sm font-bold text-slate-700 inline-block">Tool Support: Balsamiq, Sketch (Wireframe Kits)</div>
+                        </div>
+                    </div>
+
+                    <!-- Low-Fi (Hidden) -->
+                    <div id="proto-lofi" class="proto-content flex gap-16 items-center w-full max-w-3xl absolute opacity-0 pointer-events-none transition-opacity duration-300">
+                        <div class="w-[280px] h-[400px] border-4 border-slate-800 bg-slate-50 p-4 space-y-4 rounded-2xl flex-shrink-0">
+                            <div class="w-full text-center font-bold text-slate-700 text-sm">App Dashboard</div>
+                            <div class="w-20 h-20 rounded-full bg-slate-300 mx-auto mt-6"></div>
+                            <div class="text-center font-mono text-2xl font-bold text-slate-800 mt-4">$X,XXX.00</div>
+                            <div class="text-center text-xs text-slate-500">Available Balance</div>
+                            <div class="w-full h-12 bg-slate-800 rounded-lg flex items-center justify-center font-bold text-white mt-6">Action 1</div>
+                        </div>
+                         <div>
+                            <h3 class="font-black text-2xl text-slate-800 mb-2 uppercase tracking-widest">Low-Fidelity</h3>
+                            <p class="text-slate-600 mb-6">Adds basic interaction, scale, and rough typography. Often used for early user testing of the conceptual model before investing in visual design.</p>
+                            <div class="bg-slate-100 px-4 py-2 rounded text-sm font-bold text-slate-700 inline-block">Tool Support: Figma, Adobe XD</div>
+                        </div>
+                    </div>
+
+                    <!-- Hi-Fi (Hidden) -->
+                    <div id="proto-hifi" class="proto-content flex gap-16 items-center w-full max-w-3xl absolute opacity-0 pointer-events-none transition-opacity duration-300">
+                         <div class="w-[280px] h-[400px] border-[6px] border-slate-900 bg-white p-4 space-y-4 rounded-[2rem] shadow-xl flex-shrink-0">
+                            <div class="w-full text-center font-bold text-brand-600 text-sm tracking-wide">FLOWBANK</div>
+                            <div class="w-20 h-20 rounded-full bg-brand-50 border border-brand-100 mx-auto mt-6 flex items-center justify-center text-3xl shadow-inner">👤</div>
+                            <div class="text-center font-black text-3xl text-brand-900 mt-4">₹25,450</div>
+                            <div class="text-center text-[10px] font-bold uppercase tracking-widest text-brand-400">Available Balance</div>
+                            <div class="w-full h-12 bg-brand-600 text-white rounded-xl flex items-center justify-center font-bold mt-6 shadow-md shadow-brand-200">Send Money</div>
+                        </div>
+                        <div>
+                            <h3 class="font-black text-2xl text-brand-900 mb-2 uppercase tracking-widest">High-Fidelity</h3>
+                            <p class="text-brand-800 mb-6 leading-relaxed">Looks and acts like the final product. Uses actual brand colors, exact typography, and realistic UI data. Provides a realistic user experience for final evaluation.</p>
+                            <div class="flex gap-2">
+                                <span class="bg-brand-50 border border-brand-200 px-3 py-1 rounded text-xs font-bold text-brand-700">Figma</span>
+                                <span class="bg-brand-50 border border-brand-200 px-3 py-1 rounded text-xs font-bold text-brand-700">HTML</span>
+                                <span class="bg-brand-50 border border-brand-200 px-3 py-1 rounded text-xs font-bold text-brand-700">CSS</span>
+                                <span class="bg-brand-50 border border-brand-200 px-3 py-1 rounded text-xs font-bold text-brand-700">JavaScript</span>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+            <script>
+                function switchProto(btn) {
+                    document.querySelectorAll('.proto-btn').forEach(b => {
+                        b.classList.remove('bg-brand-600', 'text-white', 'shadow');
+                        b.classList.add('bg-white', 'text-slate-600');
+                    });
+                    btn.classList.remove('bg-white', 'text-slate-600');
+                    btn.classList.add('bg-brand-600', 'text-white', 'shadow');
+
+                    document.querySelectorAll('.proto-content').forEach(c => {
+                        c.classList.remove('opacity-100');
+                        c.classList.add('opacity-0', 'pointer-events-none');
+                    });
+                    const target = document.getElementById('proto-' + btn.dataset.proto);
+                    target.classList.remove('opacity-0', 'pointer-events-none');
+                    target.classList.add('opacity-100');
+                }
+            </script>
+        </section>
+
+        <!-- ==========================================
+             SLIDE 13: EVALUATION & DECIDE
+             ========================================== -->
+        <section class="slide" id="slide-13" data-section="Evaluation">
+             <header class="mb-10 slide-up">
+                <span class="text-brand-500 font-bold tracking-widest text-sm uppercase">Evaluation</span>
+                <h2 class="text-4xl font-bold text-brand-950 mt-2">Evaluation Framework</h2>
+            </header>
+
+            <div class="flex flex-col flex-1 slide-up delay-100 gap-8">
+                <!-- What Why When -->
+                <div class="grid grid-cols-3 gap-6">
+                    <div class="bg-brand-50 text-brand-900 p-6 rounded-2xl shadow-sm border border-brand-200">
+                        <h3 class="text-brand-600 font-bold uppercase tracking-widest text-xs mb-2">WHAT is evaluation?</h3>
+                        <p class="text-sm font-medium text-brand-800">Measuring the usability, UX, and effectiveness of an interface against design requirements.</p>
+                    </div>
+                    <div class="bg-brand-50 text-brand-900 p-6 rounded-2xl shadow-sm border border-brand-200">
+                        <h3 class="text-brand-600 font-bold uppercase tracking-widest text-xs mb-2">WHY evaluate?</h3>
+                        <p class="text-sm font-medium text-brand-800">To find problems and improve the interface before full deployment, preventing costly errors.</p>
+                    </div>
+                    <div class="bg-brand-50 text-brand-900 p-6 rounded-2xl shadow-sm border border-brand-200">
+                        <h3 class="text-brand-600 font-bold uppercase tracking-widest text-xs mb-2">WHEN to evaluate?</h3>
+                        <p class="text-sm font-medium text-brand-800">Before (concepts), during (prototypes), and after development (live system).</p>
+                    </div>
+                </div>
+
+                <!-- DECIDE Framework -->
+                <div class="bg-brand-50 border border-brand-200 rounded-3xl p-8 shadow-sm flex-1">
+                    <h3 class="text-2xl font-bold text-brand-900 mb-6 text-center">The DECIDE Framework</h3>
+                    <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+                        <div class="bg-white p-5 rounded-xl border border-brand-100 shadow-sm interactive-card">
+                            <div class="text-3xl font-black text-brand-400 mb-1">D</div>
+                            <h4 class="font-bold text-brand-900 text-sm">Determine goals</h4>
+                            <p class="text-xs text-brand-700 mt-1">What are we trying to achieve? (e.g., Can users send money safely?)</p>
+                        </div>
+                        <div class="bg-white p-5 rounded-xl border border-brand-100 shadow-sm interactive-card">
+                            <div class="text-3xl font-black text-brand-400 mb-1">E</div>
+                            <h4 class="font-bold text-brand-900 text-sm">Explore questions</h4>
+                            <p class="text-xs text-brand-700 mt-1">Specific UX questions. (e.g., Do they notice the inline error message?)</p>
+                        </div>
+                        <div class="bg-white p-5 rounded-xl border border-brand-100 shadow-sm interactive-card">
+                            <div class="text-3xl font-black text-brand-400 mb-1">C</div>
+                            <h4 class="font-bold text-brand-900 text-sm">Choose methods</h4>
+                            <p class="text-xs text-brand-700 mt-1">Select usability testing, heuristic evaluation, or observation.</p>
+                        </div>
+                        <div class="bg-white p-5 rounded-xl border border-brand-100 shadow-sm interactive-card">
+                            <div class="text-3xl font-black text-brand-400 mb-1">I</div>
+                            <h4 class="font-bold text-brand-900 text-sm">Identify practical issues</h4>
+                            <p class="text-xs text-brand-700 mt-1">Select users, budget, and setup facilities.</p>
+                        </div>
+                        <div class="bg-white p-5 rounded-xl border border-brand-100 shadow-sm interactive-card">
+                            <div class="text-3xl font-black text-brand-400 mb-1">D</div>
+                            <h4 class="font-bold text-brand-900 text-sm">Decide ethical issues</h4>
+                            <p class="text-xs text-brand-700 mt-1">Privacy, consent, and anonymizing simulated banking test data.</p>
+                        </div>
+                        <div class="bg-white p-5 rounded-xl border border-brand-100 shadow-sm interactive-card">
+                            <div class="text-3xl font-black text-brand-400 mb-1">E</div>
+                            <h4 class="font-bold text-brand-900 text-sm">Evaluate & interpret</h4>
+                            <p class="text-xs text-brand-700 mt-1">Analyze data: Task completion, Time taken, Errors, Satisfaction.</p>
+                        </div>
+                    </div>
+
+                    <div class="mt-6 flex items-center gap-4 bg-white p-4 rounded-xl border border-brand-200">
+                        <span class="bg-brand-100 text-brand-800 font-bold px-3 py-1 rounded text-xs tracking-widest uppercase">Pilot Study</span>
+                        <p class="text-sm text-brand-900 font-medium">"Test the simulated banking task with a small group of students before a larger usability evaluation."</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ==========================================
+             SLIDE 14: LIVE INTERACTIVE DEMO
+             ========================================== -->
+        <section class="slide bg-slate-50" id="slide-14" data-section="Live Demonstration">
+            <header class="mb-4 flex justify-between items-end slide-up">
+                <div>
+                    <span class="text-brand-500 font-bold tracking-widest text-sm uppercase">🔥 Live Interaction</span>
+                    <h2 class="text-4xl font-bold text-brand-950 mt-1">LIVE HCI DEMONSTRATION</h2>
+                    <p class="text-brand-700 font-bold mt-1 text-lg">Same Task. Different Experience.</p>
+                </div>
+                <div class="flex bg-slate-200 rounded-xl p-1.5 shadow-inner">
+                    <button id="toggle-bad" class="px-8 py-3 rounded-lg font-bold text-sm bg-slate-600 text-white shadow transition-all" onclick="toggleDemo('bad')">Poorer HCI</button>
+                    <button id="toggle-good" class="px-8 py-3 rounded-lg font-bold text-sm text-slate-500 hover:text-brand-600 transition-all" onclick="toggleDemo('good')">Good HCI</button>
+                </div>
+            </header>
+
+            <div class="flex-1 flex gap-8 slide-up delay-100 mt-4">
+                
+                <!-- DEMO PHONES -->
+                <div class="w-[350px] flex justify-center items-center h-full relative">
+                    
+                    <div class="absolute -top-4 w-full text-center z-20">
+                        <span class="bg-yellow-100 border border-yellow-300 text-yellow-800 text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-widest shadow-sm">
+                            For HCI educational demonstration only — no real transactions
+                        </span>
+                    </div>
+
+                    <!-- BAD HCI SIMULATION -->
+                    <div id="demo-app-bad" class="demo-phone bad-demo w-full h-[600px]">
+                        <div class="demo-header bg-slate-700">
+                            <div class="text-[10px] tracking-widest uppercase opacity-50 mb-1">System 1.0</div>
+                            <div class="font-bold text-lg">FLOWBANK</div>
+                        </div>
+                        <div class="p-6 bg-slate-100 h-full">
+                            <p class="text-[10px] text-red-500 font-bold mb-6 text-center uppercase">SIMULATED INTERFACE</p>
+                            
+                            <div id="bad-step-1" class="space-y-4">
+                                <div class="text-sm font-bold text-slate-700">Funds Transfer Protocol</div>
+                                <div class="text-[11px] font-mono text-slate-500 bg-slate-200 p-2 rounded">Acct Bal: 25450 INR</div>
+                                <input type="text" placeholder="Beneficiary ID String" value="Rahul" class="w-full p-3 border border-slate-300 text-sm bg-white font-mono rounded" readonly>
+                                <input type="number" id="bad-amount" placeholder="Amount to deduct" class="w-full p-3 border border-slate-300 text-sm bg-white font-mono rounded mt-2">
+                                <button class="w-full bg-slate-400 text-white py-3 font-bold text-sm mt-6 rounded shadow-sm hover:bg-slate-500 transition-colors" onclick="processBadTx()">Execute Command</button>
+                            </div>
+
+                            <div id="bad-error" class="hidden mt-12 text-center bg-white p-6 rounded border-2 border-red-200 shadow-sm">
+                                <div class="text-4xl font-mono text-red-600 mb-2 font-black">ERROR 104</div>
+                                <div class="text-xs font-bold text-slate-800 border-t border-slate-200 pt-2 mt-2">TRANSACTION FAILED</div>
+                                <button class="w-full bg-slate-200 text-slate-800 py-2 font-bold text-xs mt-6 rounded" onclick="resetBadDemo()">Return to start</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- GOOD HCI SIMULATION -->
+                    <div id="demo-app-good" class="demo-phone hidden w-full h-[600px] border-brand-950">
+                        <div class="bg-brand-600 text-white p-4 pt-8 text-center relative shadow-sm">
+                            <div class="font-bold text-lg tracking-wide">Send Money</div>
+                        </div>
+                        <div class="p-6 bg-white h-full relative">
+                            <div id="good-step-1">
+                                <div class="bg-brand-50 p-4 rounded-xl border border-brand-100 flex justify-between items-center mb-6">
+                                    <div class="text-sm text-brand-800 font-bold">Checking</div>
+                                    <div class="text-sm font-black text-brand-900">₹25,450</div>
+                                </div>
+                                
+                                <label class="text-[10px] font-bold text-brand-500 uppercase tracking-widest block mb-1">Send to</label>
+                                <div class="flex items-center gap-3 p-3 border border-slate-200 rounded-xl mb-6 bg-white shadow-sm">
+                                    <div class="w-8 h-8 rounded-full bg-brand-100 text-brand-700 flex items-center justify-center font-bold text-sm">R</div>
+                                    <div class="text-sm font-bold text-brand-900">Rahul</div>
+                                </div>
+
+                                <label class="text-[10px] font-bold text-brand-500 uppercase tracking-widest block mb-1">Amount (₹)</label>
+                                <input type="number" id="good-amount" placeholder="0" class="w-full p-4 border-2 border-slate-200 rounded-xl text-3xl font-black text-brand-900 focus:border-brand-500 focus:ring-4 focus:ring-brand-50 outline-none transition-all" oninput="checkGoodAmount()">
+                                
+                                <div id="good-error-msg" class="text-red-500 text-xs font-bold mt-2 hidden bg-red-50 p-2 rounded-lg border border-red-100 flex flex-col gap-1">
+                                    <span class="flex items-center gap-1">⚠ Insufficient Balance</span>
+                                    <span class="text-brand-800 font-medium">Please enter an amount of ₹25,450 or less.</span>
+                                </div>
+
+                                <div id="good-controls" class="hidden mt-4 flex gap-2">
+                                    <button class="flex-1 bg-white border-2 border-brand-200 text-brand-800 py-2 rounded-lg font-bold text-xs" onclick="document.getElementById('good-amount').focus()">EDIT AMOUNT</button>
+                                    <button class="flex-1 bg-slate-100 text-slate-600 py-2 rounded-lg font-bold text-xs" onclick="resetGoodDemo()">CANCEL</button>
+                                </div>
+
+                                <button id="good-submit-btn" class="w-full bg-brand-600 text-white py-4 rounded-xl font-bold text-base shadow-lg shadow-brand-200 absolute bottom-[100px] left-0 right-0 mx-6 w-auto transition-all" onclick="processGoodTx()">Review Transfer</button>
+                            </div>
+
+                            <div id="good-success" class="hidden h-full flex flex-col items-center justify-center -mt-16">
+                                <div class="w-20 h-20 bg-success-50 rounded-full flex items-center justify-center text-success-500 mb-6 scale-0 animate-[fadeIn_0.4s_ease_forwards] border-4 border-success-100">
+                                     <span class="text-4xl">✓</span>
+                                </div>
+                                <h3 class="text-xl font-black text-brand-900 mb-2 uppercase tracking-wide">Transfer Successful</h3>
+                                <p class="text-brand-600 text-center font-medium text-sm">₹<span id="success-amt" class="font-bold text-brand-900"></span> has been sent to Rahul.</p>
+                                <button class="mt-8 w-full py-3 bg-brand-50 border border-brand-200 text-brand-800 font-bold rounded-xl shadow-sm" onclick="resetGoodDemo()">DONE</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- INFO PANEL -->
+                <div class="flex-1 bg-white rounded-3xl border border-slate-200 shadow-sm p-8 flex flex-col">
+                    <h3 class="font-black text-2xl text-brand-900 mb-2">Task Analysis</h3>
+                    <p class="text-sm font-bold text-brand-600 bg-brand-50 p-3 rounded-lg border border-brand-100 inline-block w-max mb-8">
+                        Task: "Transfer ₹2,000 to Rahul." (Available: ₹25,450)
+                    </p>
+                    
+                    <div class="space-y-4 flex-1">
+                        <div class="bg-slate-50 p-4 rounded-xl border border-slate-100">
+                            <div class="flex justify-between items-center text-sm font-bold text-slate-700 mb-2">
+                                <span>Feedback</span> <span id="ind-feed" class="text-xs uppercase tracking-widest">---</span>
+                            </div>
+                            <div class="w-full h-2 bg-slate-200 rounded-full overflow-hidden"><div id="bar-feed" class="h-full bg-slate-400 w-1/2 transition-all duration-500"></div></div>
+                        </div>
+                        <div class="bg-slate-50 p-4 rounded-xl border border-slate-100">
+                            <div class="flex justify-between items-center text-sm font-bold text-slate-700 mb-2">
+                                <span>Error Prevention</span> <span id="ind-err" class="text-xs uppercase tracking-widest">---</span>
+                            </div>
+                            <div class="w-full h-2 bg-slate-200 rounded-full overflow-hidden"><div id="bar-err" class="h-full bg-slate-400 w-1/2 transition-all duration-500"></div></div>
+                        </div>
+                        <div class="bg-slate-50 p-4 rounded-xl border border-slate-100">
+                            <div class="flex justify-between items-center text-sm font-bold text-slate-700 mb-2">
+                                <span>User Control</span> <span id="ind-ctrl" class="text-xs uppercase tracking-widest">---</span>
+                            </div>
+                            <div class="w-full h-2 bg-slate-200 rounded-full overflow-hidden"><div id="bar-ctrl" class="h-full bg-slate-400 w-1/2 transition-all duration-500"></div></div>
+                        </div>
+                        <div class="bg-slate-50 p-4 rounded-xl border border-slate-100">
+                            <div class="flex justify-between items-center text-sm font-bold text-slate-700 mb-2">
+                                <span>Efficiency & Cognitive Load</span> <span id="ind-eff" class="text-xs uppercase tracking-widest">---</span>
+                            </div>
+                            <div class="w-full h-2 bg-slate-200 rounded-full overflow-hidden"><div id="bar-eff" class="h-full bg-slate-400 w-1/2 transition-all duration-500"></div></div>
+                        </div>
+                    </div>
+
+                    <div id="demo-insight" class="bg-brand-900 text-white p-5 rounded-2xl shadow-floating mt-6 text-sm font-medium leading-relaxed">
+                        Select a system mode to begin the interactive demonstration. Follow the task above.
+                    </div>
+                </div>
+            </div>
+
+            <script>
+                const demoBalance = 25450;
+
+                function setIndicators(mode) {
+                    const bars = ['feed', 'err', 'ctrl', 'eff'];
+                    bars.forEach(b => {
+                        const el = document.getElementById('bar-' + b);
+                        const ind = document.getElementById('ind-' + b);
+                        if(mode === 'bad') {
+                            el.className = 'h-full w-[20%] transition-all duration-500 bg-red-500';
+                            ind.innerText = 'Poor'; ind.className = 'text-xs uppercase tracking-widest text-red-500';
+                        } else {
+                            el.className = 'h-full w-[95%] transition-all duration-500 bg-success-500';
+                            ind.innerText = 'Excellent'; ind.className = 'text-xs uppercase tracking-widest text-success-500';
+                        }
+                    });
+                }
+
+                function toggleDemo(mode) {
+                    if(mode === 'bad') {
+                        document.getElementById('toggle-bad').className = 'px-8 py-3 rounded-lg font-bold text-sm bg-slate-600 text-white shadow transition-all';
+                        document.getElementById('toggle-good').className = 'px-8 py-3 rounded-lg font-bold text-sm text-slate-500 hover:text-brand-600 transition-all';
+                        document.getElementById('demo-app-bad').classList.remove('hidden');
+                        document.getElementById('demo-app-good').classList.add('hidden');
+                        document.getElementById('demo-insight').innerHTML = "<strong>Poorer HCI Mode Active:</strong> Try entering ₹30,000. Notice the lack of active guidance, high cognitive load, cryptic feedback, and poor error recovery.";
+                        setIndicators('bad');
+                        resetBadDemo();
+                    } else {
+                        document.getElementById('toggle-good').className = 'px-8 py-3 rounded-lg font-bold text-sm bg-brand-600 text-white shadow transition-all';
+                        document.getElementById('toggle-bad').className = 'px-8 py-3 rounded-lg font-bold text-sm text-slate-500 hover:text-brand-600 transition-all';
+                        document.getElementById('demo-app-good').classList.remove('hidden');
+                        document.getElementById('demo-app-bad').classList.add('hidden');
+                        document.getElementById('demo-insight').innerHTML = "<strong>Good HCI Mode Active:</strong> Try entering ₹30,000. Notice how the system actively prevents errors, explains the issue clearly, and provides easy recovery options (Edit/Cancel).";
+                        setIndicators('good');
+                        resetGoodDemo();
+                    }
+                }
+
+                function processBadTx() {
+                    document.getElementById('bad-step-1').classList.add('hidden');
+                    document.getElementById('bad-error').classList.remove('hidden'); // Always fails to prove the generic error point
+                }
+                function resetBadDemo() {
+                    document.getElementById('bad-amount').value = '';
+                    document.getElementById('bad-error').classList.add('hidden');
+                    document.getElementById('bad-step-1').classList.remove('hidden');
+                }
+
+                function checkGoodAmount() {
+                    const amtStr = document.getElementById('good-amount').value;
+                    const amt = parseInt(amtStr);
+                    const btn = document.getElementById('good-submit-btn');
+                    const err = document.getElementById('good-error-msg');
+                    const controls = document.getElementById('good-controls');
+                    
+                    if (amtStr && amt > demoBalance) {
+                        err.classList.remove('hidden');
+                        controls.classList.remove('hidden');
+                        btn.classList.add('opacity-50', 'cursor-not-allowed', 'bg-slate-400');
+                        btn.classList.remove('bg-brand-600', 'shadow-lg');
+                        btn.disabled = true;
+                    } else {
+                        err.classList.add('hidden');
+                        controls.classList.add('hidden');
+                        btn.classList.remove('opacity-50', 'cursor-not-allowed', 'bg-slate-400');
+                        btn.classList.add('bg-brand-600', 'shadow-lg');
+                        if(amtStr && amt > 0) btn.disabled = false;
+                        else btn.disabled = true;
+                    }
+                }
+
+                function processGoodTx() {
+                    const amt = document.getElementById('good-amount').value;
+                    if(!amt || parseInt(amt) > demoBalance || parseInt(amt) <= 0) return;
+                    
+                    document.getElementById('good-step-1').classList.add('hidden');
+                    document.getElementById('good-success').classList.remove('hidden');
+                    // Add comma to number
+                    document.getElementById('success-amt').innerText = parseInt(amt).toLocaleString('en-IN');
+                }
+
+                function resetGoodDemo() {
+                    document.getElementById('good-amount').value = '';
+                    checkGoodAmount();
+                    document.getElementById('good-success').classList.add('hidden');
+                    document.getElementById('good-step-1').classList.remove('hidden');
+                }
+            </script>
+        </section>
+
+        <!-- ==========================================
+             SLIDE 15: FUTURE HCI & CONCLUSION
+             ========================================== -->
+        <section class="slide items-center justify-center text-center relative bg-gradient-to-t from-brand-50 to-white" id="slide-15" data-section="Conclusion">
+            <div class="max-w-5xl relative z-10 w-full slide-up">
+                <h2 class="text-5xl font-black text-brand-950 mb-12">Beyond the Screen</h2>
+                
+                <div class="grid grid-cols-2 md:grid-cols-3 gap-6 mb-16 delay-100 slide-up text-left">
+                    <div class="p-6 bg-white rounded-2xl border border-brand-100 shadow-sm interactive-card">
+                        <div class="text-3xl mb-3">🗣️</div>
+                        <h3 class="font-bold text-brand-900 mb-1">Voice Banking</h3>
+                        <p class="text-xs text-brand-600">Expressive command interfaces reducing physical UI dependency.</p>
+                    </div>
+                    <div class="p-6 bg-white rounded-2xl border border-brand-100 shadow-sm interactive-card">
+                        <div class="text-3xl mb-3">👁️</div>
+                        <h3 class="font-bold text-brand-900 mb-1">Biometrics</h3>
+                        <p class="text-xs text-brand-600">Zero-friction security through physiological recognition.</p>
+                    </div>
+                    <div class="p-6 bg-white rounded-2xl border border-brand-100 shadow-sm interactive-card">
+                        <div class="text-3xl mb-3">🕶️</div>
+                        <h3 class="font-bold text-brand-900 mb-1">AR/VR</h3>
+                        <p class="text-xs text-brand-600">Immersive financial environments replacing 2D dashboards.</p>
+                    </div>
+                    <div class="p-6 bg-white rounded-2xl border border-brand-100 shadow-sm interactive-card">
+                        <div class="text-3xl mb-3">🤖</div>
+                        <h3 class="font-bold text-brand-900 mb-1">AI-Assisted</h3>
+                        <p class="text-xs text-brand-600">Predictive and multimodal interaction anticipating needs.</p>
+                    </div>
+                    <div class="p-6 bg-white rounded-2xl border border-brand-100 shadow-sm interactive-card">
+                        <div class="text-3xl mb-3">♿</div>
+                        <h3 class="font-bold text-brand-900 mb-1">Accessible Interfaces</h3>
+                        <p class="text-xs text-brand-600">Hyper-personalized UI adapting to individual limitations.</p>
+                    </div>
+                    <div class="p-6 bg-brand-900 rounded-2xl shadow-floating text-white border border-brand-700 interactive-card">
+                        <div class="text-brand-300 text-xs font-bold uppercase tracking-widest mb-3">Grand Challenges</div>
+                        <div class="flex flex-wrap gap-2">
+                            <span class="bg-brand-800 px-2 py-1 rounded text-xs">Privacy</span>
+                            <span class="bg-brand-800 px-2 py-1 rounded text-xs">Security</span>
+                            <span class="bg-brand-800 px-2 py-1 rounded text-xs">Trust</span>
+                            <span class="bg-brand-800 px-2 py-1 rounded text-xs">Ethics</span>
+                            <span class="bg-brand-800 px-2 py-1 rounded text-xs">Human Control</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white p-10 rounded-[2rem] border border-brand-200 shadow-glass delay-300 slide-up max-w-4xl mx-auto">
+                    <h3 class="text-2xl font-bold text-brand-900 mb-4 italic">"Good HCI is not just about how an interface looks."</h3>
+                    <p class="text-xl text-brand-700 font-medium mb-8">
+                        "It is about how easily, clearly and safely users can achieve their goals."
+                    </p>
+                    
+                    <div class="flex items-center justify-center gap-4 font-black text-sm text-brand-800 flex-wrap uppercase tracking-widest">
+                        <span class="bg-brand-50 border border-brand-100 px-4 py-2 rounded-lg">THEORY</span> <span class="text-brand-300">+</span>
+                        <span class="bg-brand-50 border border-brand-100 px-4 py-2 rounded-lg">DESIGN</span> <span class="text-brand-300">+</span>
+                        <span class="bg-brand-50 border border-brand-100 px-4 py-2 rounded-lg">PROTOTYPE</span> <span class="text-brand-300">+</span>
+                        <span class="bg-brand-50 border border-brand-100 px-4 py-2 rounded-lg">EVALUATION</span> <span class="text-brand-300">=</span>
+                        <span class="bg-brand-600 text-white border border-brand-700 px-6 py-2 rounded-lg shadow-md">BETTER UX</span>
+                    </div>
+                </div>
+
+                <div class="mt-12 text-brand-400 font-black tracking-widest text-2xl delay-500 slide-up">THANK YOU</div>
+            </div>
+        </section>
+
+    </div> <!-- End Container -->
+
+    <!-- ==========================================
+         CONTROL BAR & UI OVERLAYS
+         ========================================== -->
+    <nav id="control-bar">
+        <div id="progress-container"><div id="progress-bar"></div></div>
+        
+        <div class="flex items-center gap-4 w-1/3">
+            <h1 class="font-black text-brand-900 text-sm hidden md:block">HCI in Digital Banking</h1>
+            <span class="text-xs font-bold text-brand-500 uppercase tracking-widest border-l-2 border-slate-200 pl-4 hidden lg:block" id="section-label">Introduction</span>
+        </div>
+        
+        <div class="flex items-center justify-center gap-6 w-1/3">
+            <button onclick="prevSlide()" class="p-2 text-brand-600 hover:bg-brand-50 rounded-full transition-colors font-bold text-xl" title="Previous Slide">←</button>
+            <div class="text-sm font-black text-brand-800 tracking-widest" id="slide-indicator">01 / 15</div>
+            <button onclick="nextSlide()" class="p-2 text-brand-600 hover:bg-brand-50 rounded-full transition-colors font-bold text-xl" title="Next Slide">→</button>
+        </div>
+
+        <div class="flex items-center justify-end gap-3 w-1/3">
+             <button onclick="toggleModal()" class="px-4 py-2 text-xs font-bold text-slate-600 bg-slate-50 hover:bg-slate-100 rounded-lg transition-colors border border-slate-200">
+                SOURCES
+            </button>
+             <button onclick="toggleNotes()" class="px-4 py-2 text-xs font-bold text-brand-700 bg-brand-50 hover:bg-brand-100 rounded-lg transition-colors border border-brand-200">
+                NOTES
+            </button>
+            <button onclick="toggleFullScreen()" class="px-4 py-2 text-xs font-bold text-white bg-brand-600 hover:bg-brand-700 rounded-lg transition-colors shadow-sm">
+                PRESENT
+            </button>
+        </div>
+    </nav>
+
+    <!-- Notes Panel -->
+    <div id="presenter-notes">
+        <div class="flex justify-between items-center mb-4 pb-3 border-b border-slate-100">
+            <h4 class="font-black text-brand-900 text-sm uppercase tracking-wider">Presenter Notes</h4>
+            <button onclick="toggleNotes()" class="text-slate-400 hover:text-slate-700 font-bold">✕</button>
+        </div>
+        <p id="note-content" class="text-sm text-slate-700 leading-relaxed max-h-[300px] overflow-y-auto pr-2 font-medium"></p>
+    </div>
+
+    <!-- Sources Modal -->
+    <div id="sources-modal" class="fixed inset-0 z-[100] items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-lg w-full p-8 shadow-2xl relative">
+            <button onclick="toggleModal()" class="absolute top-6 right-6 text-slate-400 hover:text-brand-900 font-bold text-xl">✕</button>
+            <h3 class="text-2xl font-black text-brand-900 mb-6">Sources & References</h3>
+            <ul class="space-y-4 text-sm text-slate-700">
+                <li class="flex gap-3"><span class="text-brand-500 font-bold">1.</span> <span class="font-medium">Mauri Martinez — BofI / Axos Bank Consumer Banking Application Redesign Case Study.</span></li>
+                <li class="flex gap-3"><span class="text-brand-500 font-bold">2.</span> <span class="font-medium">HCI syllabus and core course material provided with the project.</span></li>
+            </ul>
+            <div class="mt-8 bg-brand-50 p-4 rounded-xl border border-brand-100 text-xs font-bold text-brand-800 uppercase tracking-widest text-center">
+                Banking interfaces in the live demonstration are simulated for educational purposes.
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- State ---
+        let currentSlide = 0;
+        const totalSlides = 15;
+        let notesVisible = false;
+
+        // --- Presenter Notes ---
+        const notes = [
+            "Good morning. Today I will present 'HCI in Digital Banking'. We will cover HCI theories, look at a real-world banking redesign case study, and end with a live interactive demonstration.",
+            "So, what is HCI? It is the study of how people interact with computers. In banking, the UI is critical. A good UI must be simple, clear, consistent, accessible, efficient, and learnable.",
+            "Here are the core HCI principles we use. For example, Error Prevention stops users from making costly mistakes. Universal Usability ensures our app works for everyone, including the elderly or those with visual impairments.",
+            "Banking happens across devices. A responsive web layout isn't enough. Mobile requires larger touch targets and simpler navigation. Desktop allows for multi-panel layouts. We must design for the specific platform.",
+            "This is the User-Centered Design Process. We must understand the user, build a conceptual model and framework, define design requirements, prototype, and evaluate. It is a continuous, iterative lifecycle.",
+            "We use Personas to guide us. Meet Arun. His goal is simple: transfer ₹2,000 to Rahul. To make this scenario successful, our design requirements include clear actions, visible balances, and immediate feedback.",
+            "Let's look at a published UX case study for BofI/Axos Bank. They identified documented usability challenges in their mobile account opening process. We will look at their UX analysis and the redesign.",
+            "This is an illustrative reconstruction of the old interface. Notice the documented problems: high cognitive load, too much text, unnecessary fields asked too early, and the primary button pushed below the fold.",
+            "This is the redesign. It breaks the process into smaller steps, reduces visual noise, and improves consistency. Based on the published report, median submission time dropped from 15 to 11 minutes—a 33% improvement.",
+            "Let's compare directly. In a poorer HCI, error handling gives cryptic codes, and cognitive load is high. In an improved HCI, feedback is clear, inline validation is active, and the user remains in control.",
+            "Interaction isn't just tapping. It involves direct manipulation, communication from the system, and collaboration. Soon, it will heavily involve expressive command languages and immersive environments.",
+            "To build these interfaces, we prototype. We start with wireframes for structure, move to low-fidelity for basic flow, and use tool support like Figma, HTML, and JS to build realistic high-fidelity prototypes for testing.",
+            "Before launching, we evaluate using the DECIDE framework. We determine goals, choose methods, and handle practical issues. We often run Pilot studies with a small group to catch major flaws early.",
+            "1. (Task: ₹2,000 to Rahul) 2. (Select Poorer HCI). 3. (Enter 30000). 4. See the generic error 104? This is terrible feedback and high cognitive load. 5. (Switch to Good HCI). 6. (Enter 30000). 7. See the immediate error prevention? The button is disabled. 8. (Enter 2000, click review). 9. Successful transfer. This demonstrates true user control and good feedback.",
+            "The future of HCI brings Voice Banking, Biometrics, and AI. These come with Grand Challenges like privacy, security, and trust. To conclude: Good HCI is not just visuals; it's about helping users achieve goals safely. Thank you."
+        ];
+
+        // --- Navigation ---
+        function updateSlidePosition() {
+            const container = document.getElementById('presentation-container');
+            container.style.transform = `translateX(-${currentSlide * 100}vw)`;
+            
+            document.getElementById('slide-indicator').innerText = `${String(currentSlide + 1).padStart(2, '0')} / ${totalSlides}`;
+            document.getElementById('note-content').innerText = notes[currentSlide];
+            
+            // Progress bar
+            const progress = ((currentSlide + 1) / totalSlides) * 100;
+            document.getElementById('progress-bar').style.width = `${progress}%`;
+
+            // Section label
+            const currentSlideEl = document.getElementById(`slide-${currentSlide + 1}`);
+            document.getElementById('section-label').innerText = currentSlideEl.dataset.section || "Presentation";
+
+            // Retrigger animations
+            const animatedElements = currentSlideEl.querySelectorAll('.slide-up, .fade-in');
+            animatedElements.forEach(el => {
+                el.style.animation = 'none'; el.offsetHeight; el.style.animation = null; 
+            });
+        }
+
+        function nextSlide() { if (currentSlide < totalSlides - 1) { currentSlide++; updateSlidePosition(); } }
+        function prevSlide() { if (currentSlide > 0) { currentSlide--; updateSlidePosition(); } }
+
+        // --- Keyboard Controls ---
+        window.addEventListener('keydown', (e) => {
+            // Do not intercept if user is typing in an input field during demo
+            if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+
+            if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); nextSlide(); } 
+            else if (e.key === 'ArrowLeft') { e.preventDefault(); prevSlide(); } 
+            else if (e.key === 'Home') { e.preventDefault(); currentSlide = 0; updateSlidePosition(); } 
+            else if (e.key === 'End') { e.preventDefault(); currentSlide = totalSlides - 1; updateSlidePosition(); }
+        });
+
+        // --- UI Modals & Fullscreen ---
+        function toggleNotes() {
+            const notesPanel = document.getElementById('presenter-notes');
+            notesVisible = !notesVisible;
+            if (notesVisible) notesPanel.classList.add('show');
+            else notesPanel.classList.remove('show');
+        }
+
+        function toggleModal() {
+            const modal = document.getElementById('sources-modal');
+            if(modal.classList.contains('show')) modal.classList.remove('show');
+            else modal.classList.add('show');
+        }
+
+        function toggleFullScreen() {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen().catch(err => console.log(`Error: ${err.message}`));
+            } else {
+                if (document.exitFullscreen) document.exitFullscreen();
+            }
+        }
+
+        // Initialize
+        updateSlidePosition();
+    </script>
+</body>
+</html>
